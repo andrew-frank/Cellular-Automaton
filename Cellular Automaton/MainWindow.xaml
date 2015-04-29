@@ -1,8 +1,45 @@
 ﻿<Window x:Class="Cellular_Automaton.MainWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        Title="MainWindow" Height="350" Width="525">
+        Title="MainWindow" Height="350" Width="825"
+        xmlns:AutomatonGrid="clr-namespace:Cellular_Automaton.View">
     <Grid>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="300"/>
+            <ColumnDefinition Width="1*"/>
+        </Grid.ColumnDefinitions>
+        <Grid Grid.Column="1">
+            <Grid.RowDefinitions>
+                <RowDefinition/>
+                <RowDefinition Height="35"/>
+            </Grid.RowDefinitions>
+
+            <AutomatonGrid:AutomatonGrid x:Name="automatonGrid" Grid.Row="0" MouseDown="automatonGrid_MouseDown">
+                <Grid.Resources>
+                    <!--<Style TargetType="{x:Type Rectangle}">
+                    <Setter Property="Opacity" Value="{Binding Path=IsAlive}" />
+                </Style>
+                <Style BasedOn="{StaticResource {x:Type Rectangle}}" TargetType="{x:Type Rectangle}" x:Key="RectStyle" >
+                    <Setter Property="Fill" Value="Red" />
+                </Style>-->
+                </Grid.Resources>
+            </AutomatonGrid:AutomatonGrid>
+            
+            <Grid Grid.Row="1">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition/>
+                    <ColumnDefinition Width="90"/>
+                    <ColumnDefinition Width="90"/>
+                    <ColumnDefinition Width="90"/>
+                    <ColumnDefinition Width="90"/>
+                </Grid.ColumnDefinitions>
+
+                <Button x:Name="resumeBtn" Grid.Column="1" Margin="5" Content="Resume"/>
+                <Button x:Name="pauseBtn" Grid.Column="2" Margin="5"  Content="Pause"/>
+                <Button x:Name="recordBtn" Grid.Column="3" Margin="5"  Content="Record"/>
+                <Button x:Name="clearBtn" Grid.Column="4" Margin="5" Content="Clear"/>
+            </Grid>
+        </Grid>
         
     </Grid>
 </Window>

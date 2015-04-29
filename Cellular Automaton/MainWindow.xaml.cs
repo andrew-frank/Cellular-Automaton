@@ -20,9 +20,35 @@ namespace Cellular_Automaton
     /// </summary>
     public partial class MainWindow : Window
     {
+
+        ////////////////////////////////////////////////////////////
+
+        #region view lifecycle
+
         public MainWindow()
         {
             InitializeComponent();
+            this.Title = "Cellular Automaton - Andrzej Frankowski";
         }
+
+        private void WindowLoaded(object sender, RoutedEventArgs e)
+        {
+            //for(int i = 0 ; i < )
+        }
+
+        #endregion
+
+        ////////////////////////////////////////////////////////////
+
+        #region handlers
+
+        private void automatonGrid_MouseDown(object sender, MouseButtonEventArgs e)
+        {
+
+        }
+
+        #endregion
+
+
     }
 }
