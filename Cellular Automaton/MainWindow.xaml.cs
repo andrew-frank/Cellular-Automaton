@@ -85,6 +85,23 @@ namespace Cellular_Automaton
         }
 
 
+        private void resumeBtn_Click(object sender, RoutedEventArgs e)
+        {
+            _automatonController.IsPaused = false;
+        }
+
+        private void pauseBtn_Click(object sender, RoutedEventArgs e)
+        {
+            _automatonController.IsPaused = true;
+        }
+
+        private void clearBtn_Click(object sender, RoutedEventArgs e)
+        {
+            _automatonController.IsPaused = true;
+            _automatonController.Reset();
+            //_automatonController.NewModel();
+        }
+
         /// <summary>
         /// Rect_OnMouseDown(Object, MouseButtonEventArgs)
         /// 
@@ -148,15 +165,15 @@ namespace Cellular_Automaton
         {
             InitGrid();
             PopulateGrid();
-            //ApplyRectStyle(); //flickers?
-            SetGridSizeMenu();
+            ApplyRectStyle(); //flickers?
+            //SetGridSizeMenu();
 
-            //StatusGenCount.DataContext = _ls;
-            ////RunSpeedSlider.DataContext = _ls; //todo
-            //CellBirthCount.DataContext = _ls.Model;
-            //CellDeathCount.DataContext = _ls.Model;
-            //PopulationCount.DataContext = _ls.Model;
-            //PeakPopulationCount.DataContext = _ls.Model;
+            StatusGenCount.DataContext = _automatonController;
+            RunSpeedSlider.DataContext = _automatonController;
+            CellBirthCount.DataContext = _automatonController.CurrentAutomaton;
+            CellDeathCount.DataContext = _automatonController.CurrentAutomaton;
+            PopulationCount.DataContext = _automatonController.CurrentAutomaton;
+            PeakPopulationCount.DataContext = _automatonController.CurrentAutomaton;
         }
 
 
@@ -197,6 +214,7 @@ namespace Cellular_Automaton
                 _automatonController.NewModel();
 
             InitUIState();
+            _automatonController.IsPaused = true;
         }
         
 
@@ -237,8 +255,16 @@ namespace Cellular_Automaton
 
             UIElementCollection rects = this.automatonGrid.Children;
 
-            foreach (UIElement uie in rects)
-                ((Rectangle)uie).Style = (Style)(this.automatonGrid.Resources["RectStyle"]);
+            foreach (UIElement uie in rects) {
+                System.Windows.Style s = (Style)(this.automatonGrid.Resources["RectStyle"]);
+                //Rectangle rect = (Rectangle)uie;
+                //rect.ClipToBounds = true;
+                //rect.Width = 5;
+                //rect.Height = 5;
+                //rect.Fill = new SolidColorBrush(Colors.Black);
+                //rect.Opacity = 1;
+                ((Rectangle)uie).Style = s;
+            }
         }
 
 
@@ -257,8 +283,14 @@ namespace Cellular_Automaton
                     Rectangle rect = new Rectangle();
                     Grid.SetRow(rect, row);
                     Grid.SetColumn(rect, col);
+                    //rect.ClipToBounds = true;
+                    //rect.Width = 10;
+                    //rect.Height = 10;
+                    //rect.Fill = new SolidColorBrush(Colors.Black);
+                    //rect.Opacity = 1;
                     this.automatonGrid.Children.Add(rect);
                     rect.DataContext = _automatonController.CurrentAutomaton.CellGrid[row, col];
+                    rect.SetBinding(OpacityProperty, "Alive");
                     rect.MouseDown += new MouseButtonEventHandler(Rect_OnMouseDown);
                     rect.MouseMove += new MouseEventHandler(Rect_OnMouseEnter);
                 }
@@ -278,5 +310,6 @@ namespace Cellular_Automaton
         }
 
         #endregion
+
     }
 }

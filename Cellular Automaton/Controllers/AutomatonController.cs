@@ -10,7 +10,7 @@ using System.Windows.Threading;
 namespace Cellular_Automaton.Controllers
 {
 
-    public class AutomatonController
+    public class AutomatonController : INotifyPropertyChanged
     {
         ////////////////////////////////////////////
         #region Properties and ivars
@@ -27,18 +27,53 @@ namespace Cellular_Automaton.Controllers
         }
 
 
-        private TimeSpan _timerInterval = AutomatonSettings.defaults.timerInterval;
+        private TimeSpan _timerSpan = AutomatonSettings.defaults.timerInterval;
         /// <summary>
         /// Holds the timer interval, set to default on start
         /// </summary>
-        public TimeSpan TimerInterval
+        public TimeSpan timerSpan
         {
-            get  { return _timerInterval; }
+            get  { 
+                if(_timerSpan == null)
+                    _timerSpan = AutomatonSettings.defaults.timerInterval;
+                return _timerSpan; 
+            }
             set  {
+                _timerSpan = value;
+                _timer.Interval = _timerSpan;
+            }
+        }
+
+
+        /// <summary>
+        /// Holds the timer interval, set to default on start
+        /// </summary>
+        private int _timerInterval = 0;
+        public int TimerInterval
+        {
+            get {
+                return _timerInterval;
+            }
+            set {
                 _timerInterval = value;
-                _timer.Interval = _timerInterval;
+                this.timerSpan = new TimeSpan(_timerInterval);
                 if (PropertyChanged != null)
                     PropertyChanged(this, new PropertyChangedEventArgs(Constants.PropertyChangedNameTimerInterval));
+            }
+        }
+
+
+        /// <summary>
+        /// Counts the generations that the current model has run
+        /// </summary>
+        private int _generation = 0;
+        public int Generation
+        {
+            get  {  return _generation; }
+            protected set {
+                _generation = value;
+                if (PropertyChanged != null)
+                    PropertyChanged(this, new PropertyChangedEventArgs("Generation"));
             }
         }
 
@@ -72,7 +107,8 @@ namespace Cellular_Automaton.Controllers
         {
             _automaton = new Automaton();
             _timer = new DispatcherTimer();
-            _timer.Interval = _timerInterval;
+            _timerSpan = this.timerSpan;
+            _timer.Interval = _timerSpan;
             _timer.Tick += new EventHandler(TimerEvent);
             _timer.Start();
         }
@@ -83,14 +119,16 @@ namespace Cellular_Automaton.Controllers
                 _isPaused = true;
 
             _automaton = new Automaton();
+            this.Generation = 0;
         }
 
-        public void ResetSim()
+        public void Reset()
         {
             if (!_isPaused)
                 IsPaused = true;
 
             _automaton.Reset();
+            this.Generation = 0;
         }
 
         #endregion
@@ -117,7 +155,7 @@ namespace Cellular_Automaton.Controllers
             if (this != null) { //&& !this.IsPaused
                 //if (!_currentAutomaton._lm.EvolutionHalted || ALSettings.Default.HaltOnStability == false) {
                     _automaton.Evaluate();
-                    //this.Generation++;
+                    this.Generation++;
                 //} else {
                 //    _currentAutomaton.IsPaused = true;
                 //    if (_currentAutomaton._uiCallback != null) {

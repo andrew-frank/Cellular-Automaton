@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 
 namespace Cellular_Automaton.Models
 {
-    public class Cell
+    public class Cell : INotifyPropertyChanged
     {
         private bool _alive;
         public bool Alive {

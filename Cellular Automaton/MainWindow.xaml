@@ -1,43 +1,143 @@
 ﻿<Window x:Class="Cellular_Automaton.MainWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        Title="MainWindow" Height="350" Width="825" 
+        Title="MainWindow" Height="350" Width="825" MinWidth="740" MinHeight="300"
         Loaded="Window_Loaded">
+    <Window.Resources>
+        <Style x:Key="RunSpeedSliderStyle" TargetType="{x:Type Slider}">
+            <Setter Property="Width" Value="200" />
+            <Setter Property="Value" Value="{Binding Path=TimerInterval, Mode=TwoWay}" />
+            <Setter Property="Orientation" Value="Horizontal" />
+            <Setter Property="HorizontalAlignment" Value="Left" />
+            <Setter Property="IsSnapToTickEnabled" Value="True" />
+            <Setter Property="Minimum" Value="100000" />
+            <Setter Property="Maximum" Value="10000000" />
+            <Setter Property="TickPlacement" Value="BottomRight" />
+            <Setter Property="TickFrequency" Value="1000000" />
+            <Setter Property="IsDirectionReversed" Value="True" />
+            <Setter Property="IsMoveToPointEnabled" Value="True" />
+        </Style>
+        <Style x:Key="GenCountStyle" TargetType="{x:Type TextBlock}">
+            <Setter Property="Foreground" Value="Blue" />
+            <Setter Property="Text" Value="{Binding Path=Generation}" />
+        </Style>
+        <Style x:Key="BirthCountStyle" TargetType="{x:Type TextBlock}">
+            <Setter Property="Foreground" Value="Blue" />
+            <Setter Property="Text" Value="{Binding Path=CellBirths}" />
+        </Style>
+        <Style x:Key="DeathCountStyle" TargetType="{x:Type TextBlock}">
+            <Setter Property="Foreground" Value="Blue" />
+            <Setter Property="Text" Value="{Binding Path=CellDeaths}" />
+        </Style>
+        <Style x:Key="PopulationCountStyle" TargetType="{x:Type TextBlock}">
+            <Setter Property="Foreground" Value="Blue" />
+            <Setter Property="Text" Value="{Binding Path=Population}" />
+        </Style>
+        <Style x:Key="PeakPopulationCountStyle" TargetType="{x:Type TextBlock}">
+            <Setter Property="Foreground" Value="Blue" />
+            <Setter Property="Text" Value="{Binding Path=PeakPopulation}" />
+        </Style>
+    </Window.Resources>
+    
     <Grid>
-        <Grid.ColumnDefinitions>
-            <ColumnDefinition Width="300"/>
-            <ColumnDefinition Width="1*"/>
-        </Grid.ColumnDefinitions>
-        <Grid Grid.Column="1">
-            <Grid.RowDefinitions>
-                <RowDefinition/>
-                <RowDefinition Height="35"/>
-            </Grid.RowDefinitions>
+        <Grid.RowDefinitions>
+            <RowDefinition/>
+            <RowDefinition Height="30"/>
+        </Grid.RowDefinitions>
 
-            <Grid x:Name="automatonGrid" Grid.Row="0" MouseDown="automatonGrid_MouseDown">
-                <Grid.Resources>
-                    <Style TargetType="{x:Type Rectangle}">
-                    <Setter Property="Opacity" Value="{Binding Path=Alive}" />
-                </Style>
-                <Style BasedOn="{StaticResource {x:Type Rectangle}}" TargetType="{x:Type Rectangle}" x:Key="RectStyle" >
-                    <Setter Property="Fill" Value="Red" />
-                </Style>
-                </Grid.Resources>
+        <StatusBar Grid.Row="1" Background="{DynamicResource {x:Static SystemColors.MenuBarBrushKey}}" 
+                Height="30" DockPanel.Dock="Bottom" Padding="4,0,4,0">
+            <StatusBarItem>
+                <TextBlock Width="Auto" Text="Generation:" />
+            </StatusBarItem>
+            <StatusBarItem>
+                <TextBlock Name="StatusGenCount" Width="30" Style="{StaticResource GenCountStyle}" />
+            </StatusBarItem>
+            <StatusBarItem>
+                <TextBlock Width="Auto" Text="Population:" />
+            </StatusBarItem>
+            <StatusBarItem>
+                <TextBlock Name="PopulationCount" Width="30" Style="{StaticResource PopulationCountStyle}" />
+            </StatusBarItem>
+            <StatusBarItem>
+                <TextBlock Width="Auto" Text="Peak:" />
+            </StatusBarItem>
+            <StatusBarItem>
+                <TextBlock Name="PeakPopulationCount" Width="30" Style="{StaticResource PeakPopulationCountStyle}" />
+            </StatusBarItem>
+            <StatusBarItem>
+                <TextBlock Width="Auto" Text="Born:" />
+            </StatusBarItem>
+            <StatusBarItem>
+                <TextBlock Name="CellBirthCount" Width="40" Style="{StaticResource BirthCountStyle}" />
+            </StatusBarItem>
+            <StatusBarItem>
+                <TextBlock Width="Auto" Text="Died:" />
+            </StatusBarItem>
+            <StatusBarItem>
+                <TextBlock Name="CellDeathCount" Width="40" Style="{StaticResource DeathCountStyle}" />
+            </StatusBarItem>
+            <StatusBarItem>
+                <TextBlock Width="Auto" Padding="10,0,0,0">Speed:</TextBlock>
+            </StatusBarItem>
+            <StatusBarItem>
+                <Slider Name="RunSpeedSlider" Style="{StaticResource RunSpeedSliderStyle}" />
+            </StatusBarItem>
+        </StatusBar>
+
+        <Grid Grid.Row="0">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="300"/>
+                <ColumnDefinition Width="1*"/>
+            </Grid.ColumnDefinitions>
+            <Grid Grid.Column="1">
+                <Grid.RowDefinitions>
+                    <RowDefinition/>
+                    <RowDefinition Height="35"/>
+                </Grid.RowDefinitions>
+
+                <Grid x:Name="automatonGrid" Grid.Row="0" MouseDown="automatonGrid_MouseDown">
+                    <Grid.Resources>
+                        <Style TargetType="{x:Type Rectangle}">
+                            <Setter Property="Opacity" Value="{Binding Path=Alive}" />
+                        </Style>
+                        <Style BasedOn="{StaticResource {x:Type Rectangle}}" TargetType="{x:Type Rectangle}" x:Key="RectStyle" >
+                            <Setter Property="Fill" Value="Black" />
+                        </Style>
+                    </Grid.Resources>
+                </Grid>
+
+                <Grid Grid.Row="1">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition/>
+                        <ColumnDefinition Width="90"/>
+                        <ColumnDefinition Width="90"/>
+                        <ColumnDefinition Width="90"/>
+                        <ColumnDefinition Width="90"/>
+                    </Grid.ColumnDefinitions>
+
+                    <Button x:Name="resumeBtn" Grid.Column="1" Margin="5" Content="Resume" Click="resumeBtn_Click"/>
+                    <Button x:Name="pauseBtn" Grid.Column="2" Margin="5"  Content="Pause" Click="pauseBtn_Click"/>
+                    <Button x:Name="recordBtn" Grid.Column="3" Margin="5"  Content="Record"/>
+                    <Button x:Name="clearBtn" Grid.Column="4" Margin="5" Content="Clear" Click="clearBtn_Click"/>
+                </Grid>
             </Grid>
             
-            <Grid Grid.Row="1">
-                <Grid.ColumnDefinitions>
-                    <ColumnDefinition/>
-                    <ColumnDefinition Width="90"/>
-                    <ColumnDefinition Width="90"/>
-                    <ColumnDefinition Width="90"/>
-                    <ColumnDefinition Width="90"/>
-                </Grid.ColumnDefinitions>
-
-                <Button x:Name="resumeBtn" Grid.Column="1" Margin="5" Content="Resume"/>
-                <Button x:Name="pauseBtn" Grid.Column="2" Margin="5"  Content="Pause"/>
-                <Button x:Name="recordBtn" Grid.Column="3" Margin="5"  Content="Record"/>
-                <Button x:Name="clearBtn" Grid.Column="4" Margin="5" Content="Clear"/>
+            <Grid Grid.Column="0">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="30"/>
+                    <RowDefinition/>
+                    <RowDefinition Height="35"/>
+                </Grid.RowDefinitions>
+                <Label Grid.Row="0" Content="Automaton Models"/>
+                <ListView Grid.Row="1">
+                    
+                </ListView>
+                
+                <Canvas Grid.Row="2" Height="35">
+                    <Button Content="Load" Canvas.Top="5" Canvas.Bottom="5" Canvas.Left="5" Height="25" Width="75"/>
+                    <Button Content="Save" Canvas.Top="5" Canvas.Bottom="5" Canvas.Left="85" Height="25" Width="75"/>
+                </Canvas>
             </Grid>
         </Grid>
         
