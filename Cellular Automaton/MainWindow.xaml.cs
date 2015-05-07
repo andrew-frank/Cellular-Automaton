@@ -78,6 +78,8 @@ namespace Cellular_Automaton
 
         private void loadInitStateBtn_Click(object sender, RoutedEventArgs e) {
             var item = this.initConfigsListBox.SelectedItem;
+            if (item == null)
+                return;
             Debug.Assert(item is AutomatonConfiguration);
             AutomatonConfiguration config = (AutomatonConfiguration)item;
             _automatonController.IsPaused = true;
@@ -94,11 +96,20 @@ namespace Cellular_Automaton
         }
 
         private void loadAutomatonBtn_Click(object sender, RoutedEventArgs e) {
-
+            var item = this.initConfigsListBox.SelectedItem;
+            if (item == null)
+                return;
+            Debug.Assert(item is Automaton);
+            Automaton automaton = (Automaton)item;
+            _automatonController.IsPaused = true;
+            this.NewGame(automaton);
         }
 
         private void editAutomatonBtn_Click(object sender, RoutedEventArgs e) {
+            EditAutomatonWindow wnd = new EditAutomatonWindow();
+            if (wnd.ShowDialog() == true) {
 
+            }
         }
 
 
@@ -133,7 +144,6 @@ namespace Cellular_Automaton
         {
             _automatonController.IsPaused = true;
             _automatonController.Reset();
-            //_automatonController.NewModel();
         }
 
         /// <summary>
@@ -279,8 +289,13 @@ namespace Cellular_Automaton
             InitUIState();
             _automatonController.IsPaused = true;
         }
-        
 
+        private void NewGame(Automaton automaton) 
+        {
+            _automatonController = new AutomatonController(automaton);
+            InitUIState();
+            _automatonController.IsPaused = true;
+        }
 
         /// <summary>
         /// ApplyRectStyle()

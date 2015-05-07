@@ -38,6 +38,7 @@ namespace Cellular_Automaton.Controllers
         public Automaton CurrentAutomaton
         {
             get  { return _automaton; }
+            set { _automaton = value; }
         }
 
 
@@ -127,8 +128,18 @@ namespace Cellular_Automaton.Controllers
             _timer.Start();
         }
 
-        public void NewModel()
+        public AutomatonController(Automaton automaton) 
         {
+            _automaton = automaton;
+            _timer = new DispatcherTimer();
+            _timerSpan = this.timerSpan;
+            _timer.Interval = _timerSpan;
+            _timer.Tick += new EventHandler(TimerEvent);
+            _timer.Start();
+        }
+
+
+        public void NewModel() {
             if (!_isPaused)
                 _isPaused = true;
 

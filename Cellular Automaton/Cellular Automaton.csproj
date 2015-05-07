@@ -56,10 +56,17 @@
     <Compile Include="Common\Constants.cs" />
     <Compile Include="Common\Settings.cs" />
     <Compile Include="Controllers\AutomatonController.cs" />
+    <Compile Include="EditAutomatonWindow.xaml.cs">
+      <DependentUpon>EditAutomatonWindow.xaml</DependentUpon>
+    </Compile>
     <Compile Include="Models\Automaton.cs" />
     <Compile Include="Models\AutomatonConfiguration.cs" />
     <Compile Include="Models\Cell.cs" />
     <Compile Include="Models\Rule.cs" />
+    <Page Include="EditAutomatonWindow.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
     <Page Include="MainWindow.xaml">
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
