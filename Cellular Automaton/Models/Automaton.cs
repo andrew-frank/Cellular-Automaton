@@ -6,6 +6,7 @@ using System.Text;
 using System.Threading.Tasks;
 using Cellular_Automaton.Common;
 using System.Diagnostics;
+using System.Collections.ObjectModel;
 
 namespace Cellular_Automaton.Models
 {
@@ -22,10 +23,12 @@ namespace Cellular_Automaton.Models
         #region Properties and ivars
         ////////////////////////////////////////////
 
+        public int NeighbourhoodEnvironment = 4;
+
         public RulesLogicalOperator LogicalOperator { get; set; }
 
-        private Rule[] _rules = new Rule[0];
-        public Rule[] Rules {
+        private ObservableCollection<Rule> _rules = new ObservableCollection<Rule>();
+        public ObservableCollection<Rule> Rules {
             get { return _rules; }
             set {
                 Debug.Assert(value != null);
@@ -33,7 +36,17 @@ namespace Cellular_Automaton.Models
             }
         }
 
-        public string Name { get; set; }
+        private string _name = "";
+        public string Name {
+            get {
+                return _name;
+            }
+            set {
+                _name = value;
+                if (PropertyChanged != null)
+                    PropertyChanged(this, new PropertyChangedEventArgs(Constants.PropertyChangedNameAutomatonName));
+            }
+        }
 
         /// <summary>
         /// The number of columns across the life grid
@@ -168,6 +181,7 @@ namespace Cellular_Automaton.Models
         public Automaton()
         {
             InitArrays(AutomatonSettings.defaults.gridWidth, AutomatonSettings.defaults.gridHeight);
+            this.Rules.Add(new Rule("Life rule", 4, RuleType.Count));
         }
 
         public Automaton(int rows, int columns)
@@ -249,9 +263,9 @@ namespace Cellular_Automaton.Models
             for (int row = 0; row < Rows; row++) {
                 for (int col = 0; col < Columns; col++) {
                     _lastGrid[row, col] = _cellGrid[row, col].Alive;
-                    int adj = _random.Next(0,5);
+                    int adj = _random.Next(0, 5);
                     adj = CountAdjacent(row, col); //_random.Next(0,5); // CountAdjacent(row, col); //
-                    
+
                     if (_cellGrid[row, col].Alive) {
                         if (adj == 2 || adj == 3)
                             temp[row, col] = true;
@@ -265,6 +279,52 @@ namespace Cellular_Automaton.Models
                     }
                 }
             }
+
+            //bool[] results = new bool[Rules.Count];
+            //int tempCounter = 0;
+            //bool[,] neighb;
+            //bool[] neighbourhood;
+            //bool makeAlive = false;
+
+            //for (int row = 0; row < Rows; row++) {
+            //    for (int col = 0; col < Columns; col++) {
+            //        _lastGrid[row, col] = _cellGrid[row, col].Alive;
+
+            //        makeAlive = false;
+            //        neighb = GetNeighbourhood(row, col);
+            //        neighbourhood = new bool[neighb.GetLength(0) * neighb.GetLength(1)];
+
+            //        tempCounter = 0;
+            //        for (int k = 0; k < neighb.GetLength(0); k++) {
+            //            for (int l = 0; l < neighb.GetLength(1); l++) {
+            //                neighbourhood[tempCounter] = neighb[k, l];
+            //                tempCounter++;
+            //            }
+            //        }
+
+            //        tempCounter = 0;
+            //        foreach (Rule rule in Rules) {
+            //            results[tempCounter] = rule.EvaluateNeighbours(neighbourhood);
+            //            tempCounter++;
+            //        }
+
+            //        foreach (bool b in results) {
+            //            makeAlive = (b || makeAlive);
+            //        }
+
+            //        if (_cellGrid[row, col].Alive) {
+            //            if (makeAlive)
+            //                temp[row, col] = true;
+            //            else
+            //                CellDeaths++;
+            //        } else {
+            //            if (makeAlive) {
+            //                temp[row, col] = true;
+            //                CellBirths++;
+            //            }
+            //        }
+            //    }
+            //}
 
 
             for (int row = 0; row < Rows; row++) {
@@ -332,6 +392,17 @@ namespace Cellular_Automaton.Models
         /// </summary>
         private void BuildWorkGrid()
         {
+            //_workGrid = new Cell[this.Rows + 4, this.Columns + 4];
+            //for (int row = 0 ; row < this.Rows + 2; row++) {
+            //    for (int col = 0 ; col < this.Columns + 2; col++) {
+            //        _workGrid[row, col] = new Cell();
+            //        if(row-2 > 0 && col-2 > 0)
+            //            _workGrid[row, col] = _cellGrid[row - 2, col - 2];
+            //    }
+            //}
+
+            //return;
+
             _workGrid = new Cell[this.Rows + 2, this.Columns + 2];
             for (int row = 0; row < this.Rows + 2; row++) {
                 for (int col = 0; col < this.Columns + 2; col++) {
@@ -353,7 +424,7 @@ namespace Cellular_Automaton.Models
                         // in an x cylinder grid, or the left/right in a y cylinder grid.
                         // Otherwise they wrap to the cell on the opposite side.
                       else if (row == 0) {
-                          _workGrid[row, col] = new Cell();
+                        _workGrid[row, col] = new Cell();
                     } else if (row == this.Rows + 1) {
                         _workGrid[row, col] = new Cell();
                     } else if (col == 0) {
@@ -365,6 +436,34 @@ namespace Cellular_Automaton.Models
                 }
             }
         }
+
+
+        private bool[,] GetNeighbourhood(int row, int col) 
+        {
+            int size = -1;
+            if (NeighbourhoodEnvironment == 4) {
+                size = 3;
+            } else if (NeighbourhoodEnvironment == 8) {
+                size = 3;
+            } else if (NeighbourhoodEnvironment == 24) {
+                size = 5;
+            }
+
+            Debug.Assert(size > 0 && size%2!=0);
+            bool[,] neighbourhood = new bool[size, size];
+
+            for (int i = -(size/2), x=0 ; i < neighbourhood.GetLength(0)/2 ; i++, x++) {
+                for(int j = -(size/2), y=0 ; j < neighbourhood.GetLength(1)/2 ; j++, y++) {
+                    if (row + i > 0 && col + i > 0 && row + i < _workGrid.GetLength(0) && col + i < _workGrid.GetLength(1)) {
+                        bool alive = _workGrid[row + i, col + j].Alive;
+                        neighbourhood[x, y] = alive;
+                    }
+                }
+            }
+
+            return neighbourhood;
+        }
+
 
         /// <summary>
         /// CountAdjacent(int, int)
@@ -379,8 +478,7 @@ namespace Cellular_Automaton.Models
         /// <param name="row"></param>
         /// <param name="column"></param>
         /// <returns></returns>
-        private int CountAdjacent(int row, int column)
-        {
+        private int CountAdjacent(int row, int column) {
             int count = 0;
 
             row++;
@@ -419,6 +517,7 @@ namespace Cellular_Automaton.Models
 
             return count;
         }
+
 
         #endregion
     }

@@ -59,11 +59,18 @@
     <Compile Include="EditAutomatonWindow.xaml.cs">
       <DependentUpon>EditAutomatonWindow.xaml</DependentUpon>
     </Compile>
+    <Compile Include="EditRuleWindow.xaml.cs">
+      <DependentUpon>EditRuleWindow.xaml</DependentUpon>
+    </Compile>
     <Compile Include="Models\Automaton.cs" />
     <Compile Include="Models\AutomatonConfiguration.cs" />
     <Compile Include="Models\Cell.cs" />
     <Compile Include="Models\Rule.cs" />
     <Page Include="EditAutomatonWindow.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="EditRuleWindow.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>

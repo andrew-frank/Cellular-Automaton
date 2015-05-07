@@ -32,6 +32,7 @@ namespace Cellular_Automaton
         private AutomatonController _automatonController;
 
         private ObservableCollection<AutomatonConfiguration> _initialConfigurations = new ObservableCollection<AutomatonConfiguration>();
+        private ObservableCollection<Automaton> _automatonModels = new ObservableCollection<Automaton>();
 
 
         private Brush CellBrush {
@@ -96,7 +97,7 @@ namespace Cellular_Automaton
         }
 
         private void loadAutomatonBtn_Click(object sender, RoutedEventArgs e) {
-            var item = this.initConfigsListBox.SelectedItem;
+            var item = this.modelsListBox.SelectedItem;
             if (item == null)
                 return;
             Debug.Assert(item is Automaton);
@@ -106,9 +107,33 @@ namespace Cellular_Automaton
         }
 
         private void editAutomatonBtn_Click(object sender, RoutedEventArgs e) {
+            var item = this.modelsListBox.SelectedItem;
+            int index = this.modelsListBox.SelectedIndex;
+            if (item == null)
+                return;
+            Debug.Assert(item is Automaton);
+            Automaton automaton = (Automaton)item;
+            _automatonController.IsPaused = true;
+            EditAutomatonWindow wnd = new EditAutomatonWindow(automaton);
+            //wnd.originalAutomaton = automaton;
+            if (wnd.ShowDialog() == true) {
+                _automatonModels.Remove(automaton);
+                _automatonModels.Insert(index, wnd.automaton);
+            }
+        }
+
+
+        private void newAutomatonModelBtn_Click(object sender, RoutedEventArgs e) 
+        {
+            var item = this.modelsListBox.SelectedItem;
+            if (item == null)
+                return;
+            Debug.Assert(item is Automaton);
+            Automaton automaton = (Automaton)item;
+            _automatonController.IsPaused = true;
             EditAutomatonWindow wnd = new EditAutomatonWindow();
             if (wnd.ShowDialog() == true) {
-
+                _automatonModels.Add(wnd.automaton);
             }
         }
 
@@ -117,6 +142,7 @@ namespace Cellular_Automaton
         private void Window_Loaded(object sender, RoutedEventArgs e) {
             this.NewGame();
             this.automatonGrid.Background = new SolidColorBrush(AutomatonSettings.defaults.GridBackground);
+            this.buildExampleListBoxModels();
         }
 
         private void editModeCheckBox_Checked(object sender, RoutedEventArgs e)
@@ -200,14 +226,26 @@ namespace Cellular_Automaton
 
 
         private void buildExampleListBoxModels() {
+
+            ///init configs
             bool[,] grid = new bool[_automatonController.CurrentAutomaton.Rows, _automatonController.CurrentAutomaton.Columns];
             for (int i = 0; i < grid.GetLength(0); i++) {
                 for (int j = 0; j < grid.GetLength(1); j++) {
-                    if ((i + j) % 3 == 0)
+                    grid[i, j] = false;
+                }
+            }
+            AutomatonConfiguration config = new AutomatonConfiguration("Clear config", grid);
+            _initialConfigurations.Add(config);
+
+            grid = new bool[_automatonController.CurrentAutomaton.Rows, _automatonController.CurrentAutomaton.Columns];
+            for (int i = 0; i < grid.GetLength(0); i++) {
+                for (int j = 0; j < grid.GetLength(1); j++) {
+                    if ((i + j) % 5 == 0)
                         grid[i, j] = true;
                 }
             }
-            AutomatonConfiguration config = new AutomatonConfiguration("Example config 1", grid);
+
+            config = new AutomatonConfiguration("Example config 2", grid);
             _initialConfigurations.Add(config);
 
             grid = new bool[_automatonController.CurrentAutomaton.Rows, _automatonController.CurrentAutomaton.Columns];
@@ -220,6 +258,16 @@ namespace Cellular_Automaton
 
             config = new AutomatonConfiguration("Example config 2", grid);
             _initialConfigurations.Add(config);
+
+            ///models
+            Automaton model = new Automaton();
+            model.Name = "Game of life";
+            model.Rules.Add(new Rule("Life rule", 4, RuleType.Count) );
+            _automatonModels.Add(model);
+
+            model = new Automaton();
+            model.Name = "Empty model";
+            _automatonModels.Add(model);
         }
 
 
@@ -238,8 +286,8 @@ namespace Cellular_Automaton
             ApplyRectStyle(); //flickers?
             //SetGridSizeMenu();
 
-            this.buildExampleListBoxModels();
             this.initConfigsListBox.ItemsSource = _initialConfigurations;
+            this.modelsListBox.ItemsSource = _automatonModels;
 
             StatusGenCount.DataContext = _automatonController;
             RunSpeedSlider.DataContext = _automatonController;
@@ -388,5 +436,6 @@ namespace Cellular_Automaton
         }
 
         #endregion
+
     }
 }

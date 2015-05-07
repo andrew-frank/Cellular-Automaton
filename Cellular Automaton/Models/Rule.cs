@@ -9,9 +9,28 @@ using System.Threading.Tasks;
 
 namespace Cellular_Automaton.Models
 {
-    public abstract class Rule : INotifyPropertyChanged
+    public enum RuleType
+    {
+        Count = 0,
+        Match
+    }
+
+    public class Rule : INotifyPropertyChanged
     {
         private static long RuleCount = 0;
+        //////////////////////////////////
+
+
+        private RuleType _type = RuleType.Count;
+        public RuleType Type {
+            get { return _type; }
+            set {
+                _type = value;
+                if (PropertyChanged != null)
+                    PropertyChanged(this, new PropertyChangedEventArgs(Constants.PropertyChangedNameRuleType));
+            }
+        }
+
 
         private int _neighbourhoodCount = 4;
         public int NeighbourhoodCount {
@@ -23,16 +42,27 @@ namespace Cellular_Automaton.Models
             }
         }
 
+
         /// <summary>
         /// Reads from and neighbourhood array state of the evaluated cell, its neighbours and
         /// applies the rule returning the new state of the middle cell
         /// </summary>
         /// <param name="neighbourhood">Array of bool states of neighbourhood (evaluated cell + neighbours)</param>
         /// <returns>New state of the middle cell</returns>
-        public abstract bool EvaluateNeighbours(bool[] neighbourhood);
+        public bool EvaluateNeighbours(bool[] neighbourhood) {
+            switch (this.Type) {
+                case RuleType.Count:
+                    return EvaluateCountNeighbours(neighbourhood);
+                case RuleType.Match:
+                    return EvaluateMatchNeighbours(neighbourhood);
+                default:
+                    Debug.Assert(false, "Invalid type");
+                    return false;
+            }
+        }
 
         private string _name;
-        public string Name 
+        public string Name
         {
             get { 
                 if(_name == null)
@@ -48,41 +78,26 @@ namespace Cellular_Automaton.Models
         }
 
         public override string ToString() {
-            return this.Name;
+            string type = "Count";
+            if (this.Type == RuleType.Match)
+                type = "Match";
+            return this.Name + "  Type: " + type;
         }
 
         public event PropertyChangedEventHandler PropertyChanged;
 
-        public Rule(string name, int neighbourhood) {
+        public Rule(string name, int neighbourhood, RuleType type) {
             Rule.RuleCount++;
             this.Name = name;
             this.NeighbourhoodCount = neighbourhood;
+            this.Type = type;
         }
 
         protected Rule() { }
-    }
-
-    static class RulesExtensions
-    {
-        public static int EvaluatedCellIndex(this bool[] neighbourhood) {
-            switch (neighbourhood.GetLength(0)) {
-                case 5:
-                    return 3;
-                case 9:
-                    return 5;
-                case 25:
-                    return 13;
-                default:
-                    Debug.Assert(false, "Unspecified neighbourhood environment count");
-                    throw new Exception("Unspecified neighbourhood environment count");
-            }
-        }
-    }
 
 
-    public sealed class CountRule : Rule 
-    {
-        private int[] _allowedAdjecentCount = {2 , 3};
+        #region Count rule
+        private int[] _allowedAdjecentCount = { 2, 3 };
         /// <summary>
         /// How many alive cells causes Rule to mark evaluated cell as alive
         /// </summary>
@@ -92,7 +107,7 @@ namespace Cellular_Automaton.Models
         }
 
 
-        public override bool EvaluateNeighbours(bool[] neighbourhood) {
+        public bool EvaluateCountNeighbours(bool[] neighbourhood) {
             int adjecent = this.CountAdjecent(neighbourhood);
             foreach (int allowedCount in this.AllowedAdjecentCount) {
                 if (allowedCount == adjecent)
@@ -113,10 +128,11 @@ namespace Cellular_Automaton.Models
 
             return counter;
         }
-    }
 
-    public sealed class PositionRule : Rule
-    {
+        #endregion
+
+        #region Match rule
+
         private bool[] _allowedNeighbourhood;
         public bool[] AllowedNeighbourhood {
             get {
@@ -137,14 +153,40 @@ namespace Cellular_Automaton.Models
             }
         }
 
-        public override bool EvaluateNeighbours(bool[] neighbourhood) 
-        {
+        public bool EvaluateMatchNeighbours(bool[] neighbourhood) {
+            int evaluatedCell = neighbourhood.EvaluatedCellIndex();
+            int i = 0;
+            foreach (bool state in neighbourhood) {
+                if (state != _allowedNeighbourhood[i]) {
+                    if (i != evaluatedCell)
+                        return false;
+                }
+                i++;
+            }
 
-            return false;
+            return true;
         }
 
-
+        #endregion
     }
+
+    static class RulesExtensions
+    {
+        public static int EvaluatedCellIndex(this bool[] neighbourhood) {
+            switch (neighbourhood.GetLength(0)) {
+                case 5:
+                    return 3;
+                case 9:
+                    return 5;
+                case 25:
+                    return 13;
+                default:
+                    Debug.Assert(false, "Unspecified neighbourhood environment count");
+                    throw new Exception("Unspecified neighbourhood environment count");
+            }
+        }
+    }
+
 
 
 
@@ -152,11 +194,6 @@ namespace Cellular_Automaton.Models
     //{
     //    Diagonal = 0,
     //    Border
-    //}
-
-    //public sealed class PatternRule : Rule
-    //{
-
     //}
 
 }

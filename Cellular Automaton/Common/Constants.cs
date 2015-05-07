@@ -20,8 +20,12 @@ namespace Cellular_Automaton.Common
         public static readonly string PropertyChangedNameIsAlive = "Alive";
 
         public static readonly string PropertyChangedNameRuleName = "RuleName";
+        public static readonly string PropertyChangedNameRuleType = "RuleType";
 
         public static readonly string PropertyChangedNameAutomatonConfigName = "AutomatonConfigName";
+
+        public static readonly string PropertyChangedNameAutomatonName = "Name";
+
         #endregion
     }
 }

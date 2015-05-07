@@ -1,0 +1,122 @@
+﻿<Window x:Class="Cellular_Automaton.EditAutomatonWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="EditAutomatonWindow" Height="300" Width="600" Loaded="Window_Loaded">
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="40"/>
+            <RowDefinition Height="40"/>
+            <RowDefinition Height="40"/>
+            <RowDefinition/>
+            <RowDefinition Height="35"/>
+            <RowDefinition Height="10"/>
+            <RowDefinition Height="35"/>
+        </Grid.RowDefinitions>
+        
+        <Grid Grid.Row="0">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="150"/>
+                <ColumnDefinition/>
+            </Grid.ColumnDefinitions>
+            <Label Grid.Column="0" Content="Name:" VerticalAlignment="Center" HorizontalAlignment="Stretch" Margin="5"/>
+            <TextBox x:Name="nameTextBox" Grid.Column="1" VerticalAlignment="Center" HorizontalAlignment="Stretch" Margin="5"/>
+                     <!--Text="{Binding Path=DataContext.Automaton}"-->
+        </Grid>
+
+        <Grid Grid.Row="1">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="150"/>
+                <ColumnDefinition/>
+            </Grid.ColumnDefinitions>
+            <Label Grid.Column="0" Content="Environment:" VerticalAlignment="Center" HorizontalAlignment="Stretch" Margin="5"/>
+            <Grid Grid.Column="1">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="70"/>
+                    <ColumnDefinition Width="40"/>
+                    <ColumnDefinition Width="70"/>
+                    <ColumnDefinition Width="40"/>
+                    <ColumnDefinition Width="70"/>
+                    <ColumnDefinition Width="40"/>
+                    <ColumnDefinition/>
+                </Grid.ColumnDefinitions>
+                <Label Grid.Column="0" Content="4-point:" VerticalAlignment="Center" HorizontalAlignment="Stretch" Margin="5"/>
+                <Label Grid.Column="2" Content="8-point:" VerticalAlignment="Center" HorizontalAlignment="Stretch" Margin="5"/>
+                <Label Grid.Column="4" Content="24-point:" VerticalAlignment="Center" HorizontalAlignment="Stretch" Margin="5"/>
+                <RadioButton  Grid.Column="1"  VerticalAlignment="Center" HorizontalAlignment="Left" Margin="2" 
+                              x:Name="fourCheckBox" Checked="RadioButton_Checked_1"/>
+                <RadioButton  Grid.Column="3"  VerticalAlignment="Center" HorizontalAlignment="Left" Margin="2" 
+                              x:Name="eightCheckBox" Checked="RadioButton_Checked"/>
+                <RadioButton  Grid.Column="5"  VerticalAlignment="Center" HorizontalAlignment="Left" Margin="2" 
+                              x:Name="twentyfourCheckBox" Checked="RadioButton_Checked_2"/>
+            </Grid>
+        </Grid>
+        
+        <Grid Grid.Row="2">
+            <Label Content="Rules:" VerticalAlignment="Bottom" HorizontalAlignment="Left" Margin="5"/>
+        </Grid>
+
+        <ListBox x:Name="rulesListBox" Grid.Row="3" ScrollViewer.CanContentScroll="True">
+            <!--<ListBox.ItemTemplate>
+                <DataTemplate>
+                    <Grid Height="150">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="150"/>
+                            <ColumnDefinition/>
+                        </Grid.ColumnDefinitions>
+                        <Grid Grid.Column="0" VerticalAlignment="Stretch" HorizontalAlignment="Stretch" Margin="5">
+                            <Grid.RowDefinitions>
+                                <RowDefinition/>
+                                <RowDefinition/>
+                                <RowDefinition/>
+                                <RowDefinition/>
+                            </Grid.RowDefinitions>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition/>
+                                <ColumnDefinition/>
+                                <ColumnDefinition/>
+                                <ColumnDefinition/>
+                            </Grid.ColumnDefinitions>
+                            <Rectangle Grid.Row="0" Grid.Column="0" Fill="Black" 
+                                       VerticalAlignment="Stretch" HorizontalAlignment="Stretch"/>
+                            <Rectangle Grid.Row="2" Grid.Column="1" Fill="Black" 
+                                       VerticalAlignment="Stretch" HorizontalAlignment="Stretch"/>
+                            <Rectangle Grid.Row="3" Grid.Column="3" Fill="Black" 
+                                       VerticalAlignment="Stretch" HorizontalAlignment="Stretch"/>
+                            <Rectangle Grid.Row="2" Grid.Column="2" Fill="Black" 
+                                       VerticalAlignment="Stretch" HorizontalAlignment="Stretch"/>
+                        </Grid>
+                    </Grid>
+                </DataTemplate>
+            </ListBox.ItemTemplate>-->
+        </ListBox>
+        
+        <Grid Grid.Row="4">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition/>
+                <ColumnDefinition Width="100"/>
+                <ColumnDefinition Width="100"/>
+                <ColumnDefinition Width="100"/>
+            </Grid.ColumnDefinitions>
+            <Button Grid.Column="1" x:Name="editRuleBtn" Content="Edit"
+                    VerticalAlignment="Stretch" HorizontalAlignment="Stretch" Margin="5" Click="editRuleBtn_Click"/>
+            <Button Grid.Column="2" x:Name="deleteRuleBtn" Content="Delete"
+                    VerticalAlignment="Stretch" HorizontalAlignment="Stretch" Margin="5" Click="deleteRuleBtn_Click"/>
+            <Button Grid.Column="3" x:Name="newRuleBtn" Content="New"
+                    VerticalAlignment="Stretch" HorizontalAlignment="Stretch" Margin="5" Click="newRuleBtn_Click"/>
+        </Grid>
+        
+        <Rectangle Grid.Row="5" Height="1" Fill="Black" HorizontalAlignment="Stretch" VerticalAlignment="Bottom"/>
+        
+        <Grid Grid.Row="6" Background="White">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition/>
+                <ColumnDefinition Width="100"/>
+                <ColumnDefinition Width="100"/>
+            </Grid.ColumnDefinitions>
+            <Button Grid.Column="1" x:Name="discardBtn" Content="Discard"
+                    VerticalAlignment="Stretch" HorizontalAlignment="Stretch" Margin="4" Click="discardBtn_Click"/>
+            <Button Grid.Column="2" x:Name="saveBtn" Content="Save"
+                    VerticalAlignment="Stretch" HorizontalAlignment="Stretch" Margin="4" Click="saveBtn_Click"/>
+        </Grid>
+    </Grid>
+</Window>

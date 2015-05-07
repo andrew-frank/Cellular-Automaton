@@ -98,7 +98,7 @@
                               Margin="5" Checked="editModeCheckBox_Checked" Unchecked="editModeCheckBox_Unchecked"/>
                     <Button x:Name="resumeBtn" Grid.Column="3" Margin="5" Content="Resume" Click="resumeBtn_Click"/>
                     <Button x:Name="pauseBtn" Grid.Column="4" Margin="5"  Content="Pause" Click="pauseBtn_Click"/>
-                    <Button x:Name="clearBtn" Grid.Column="5" Margin="5" Content="Clear" Click="clearBtn_Click"/>
+                    <Button x:Name="clearBtn" Grid.Column="5" Margin="5" Content="Reset" Click="clearBtn_Click"/>
                     <!--<Button x:Name="nextStepBtn" Grid.Column="6" Margin="5,5,5,0"  Content="Next Step" Height="25" VerticalAlignment="Top"/>-->
 
                 </Grid>
@@ -122,9 +122,14 @@
                 </ListBox>
 
                 <Canvas Grid.Row="2" Height="35">
-                    <Button x:Name="loadAutomatonBtn" Content="Load" Canvas.Top="5" Canvas.Bottom="5" Canvas.Left="5" Height="25" Width="75" Click="loadAutomatonBtn_Click"/>
-                    <Button x:Name="editAutomatonBtn" Content="Edit" Canvas.Top="5" Canvas.Bottom="5" Canvas.Left="85" Height="25" Width="75" Click="editAutomatonBtn_Click"/>
-                    <Label Visibility="Hidden" Content="Loaded: " Canvas.Top="5" Canvas.Bottom="5" Canvas.Left="165" Width="130"/>
+                    <Button x:Name="loadAutomatonBtn" Content="Load" Canvas.Top="5" Canvas.Bottom="5" Canvas.Left="5" 
+                            Height="25" Width="75" Click="loadAutomatonBtn_Click"/>
+                    <Button x:Name="editAutomatonBtn" Content="Edit" Canvas.Top="5" Canvas.Bottom="5" Canvas.Left="85" 
+                            Height="25" Width="75" Click="editAutomatonBtn_Click"/>
+                    <Button x:Name="newAutomatonModelBtn" Content="New" Canvas.Top="5" Canvas.Bottom="5" 
+                           Canvas.Left="165" Height="25" Width="75" Click="newAutomatonModelBtn_Click" />
+                    <!--<Label Visibility="Hidden" Content="Loaded: " Canvas.Top="5" Canvas.Bottom="5" 
+                           Canvas.Left="165" Width="130"/>-->
                 </Canvas>
 
                 <!--Initial configs-->
