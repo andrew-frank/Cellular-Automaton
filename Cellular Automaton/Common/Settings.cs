@@ -26,7 +26,7 @@ namespace Cellular_Automaton.Common
         public int gridWidth = 40;
         public int gridHeight = 40;
 
-        public Color GridBackground = Colors.White;
-        public Color ActiveCellColor = Colors.Black;
+        public Color GridBackground = Colors.Black;
+        public Color ActiveCellColor = Colors.White;
     }
 }

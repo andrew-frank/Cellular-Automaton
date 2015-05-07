@@ -3,6 +3,8 @@ using Cellular_Automaton.Controllers;
 using Cellular_Automaton.Models;
 using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
+using System.Diagnostics;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -29,6 +31,9 @@ namespace Cellular_Automaton
 
         private AutomatonController _automatonController;
 
+        private ObservableCollection<AutomatonConfiguration> _initialConfigurations = new ObservableCollection<AutomatonConfiguration>();
+
+
         private Brush CellBrush {
             get {
                 SolidColorBrush brush = new SolidColorBrush(AutomatonSettings.defaults.ActiveCellColor);
@@ -42,7 +47,13 @@ namespace Cellular_Automaton
         /// <summary>
         /// True if we are dragging across cells in edit mode
         /// </summary>
-        private bool _startEdit = false;
+        private bool _editMode = false;
+        public bool EditMode
+        {
+            get { return _editMode; }
+            set { _editMode = value; }
+        }
+
 
         /// <summary>
         /// Tracks the last cell that the mouse was in
@@ -52,36 +63,59 @@ namespace Cellular_Automaton
 
         #endregion
 
+
         ////////////////////////////////////////////////////////////
-        #region ui handles
+        #region ui & handlers
         ////////////////////////////////////////////////////////////
 
 
-        public MainWindow()
-        {
+        public MainWindow() {
             InitializeComponent();
             this.Title = "Cellular Automaton - Andrzej Frankowski";
         }
 
 
-        private void Window_Loaded(object sender, RoutedEventArgs e)
-        {
-            this.NewGame();
-            this.automatonGrid.Background = new SolidColorBrush(AutomatonSettings.defaults.GridBackground);
 
-            //LifeGrid.ShowGridLines = ALSettings.Default.GridOn;
-            //MenuSettingsGridLines.IsChecked = LifeGrid.ShowGridLines;
+        private void loadInitStateBtn_Click(object sender, RoutedEventArgs e) {
+            var item = this.initConfigsListBox.SelectedItem;
+            Debug.Assert(item is AutomatonConfiguration);
+            AutomatonConfiguration config = (AutomatonConfiguration)item;
+            _automatonController.IsPaused = true;
+            _automatonController.SetNewConfiguration(config);
         }
 
-        #endregion
+        private void saveInitStateBtn_Click(object sender, RoutedEventArgs e) {
+            NamePromptDialog dialog = new NamePromptDialog();
+            if (dialog.ShowDialog() == true) {
+                bool[,] grid = _automatonController.CurrentAutomaton.GetCurrentWorkGridConfiguration();
+                AutomatonConfiguration config = new AutomatonConfiguration(dialog.nameTextBox.Text, grid);
+                this._initialConfigurations.Add(config);
+            }
+        }
 
-        ////////////////////////////////////////////////////////////
-        #region handlers
-        ////////////////////////////////////////////////////////////
+        private void loadAutomatonBtn_Click(object sender, RoutedEventArgs e) {
 
-        private void automatonGrid_MouseDown(object sender, MouseButtonEventArgs e)
+        }
+
+        private void editAutomatonBtn_Click(object sender, RoutedEventArgs e) {
+
+        }
+
+
+
+        private void Window_Loaded(object sender, RoutedEventArgs e) {
+            this.NewGame();
+            this.automatonGrid.Background = new SolidColorBrush(AutomatonSettings.defaults.GridBackground);
+        }
+
+        private void editModeCheckBox_Checked(object sender, RoutedEventArgs e)
         {
+            _editMode = true;
+        }
 
+        private void editModeCheckBox_Unchecked(object sender, RoutedEventArgs e)
+        {
+            _editMode = false;
         }
 
 
@@ -117,13 +151,13 @@ namespace Cellular_Automaton
             //if (_automatonController.IsPaused) { //&& (_automatonController.Generation == 0)
                 Cell cell = ((Rectangle)sender).DataContext as Cell;
                 if (cell != null) {
-                    _startEdit = true;
                     _lastMouseCell = cell;
                     cell.Alive = !cell.Alive;
                     //UIStateChange(UIStateChanges.ModelCellEdited);
                 } else throw (new System.InvalidOperationException("Rect_OnMouseDown"));
             //}
         }
+
 
         /// <summary>
         /// Rect_OnMouseEnter(Object, MouseEventArgs)
@@ -135,7 +169,7 @@ namespace Cellular_Automaton
         /// <param name="e"></param>
         public void Rect_OnMouseEnter(Object sender, MouseEventArgs e)
         {
-            if (_startEdit) {
+            if (_editMode) {
                 Cell cell = ((Rectangle)sender).DataContext as Cell;
                 if (cell != null && cell != _lastMouseCell) {
                     _lastMouseCell = cell;
@@ -154,6 +188,32 @@ namespace Cellular_Automaton
         ////////////////////////////////////////////////////////////
 
 
+
+        private void buildExampleListBoxModels() {
+            bool[,] grid = new bool[_automatonController.CurrentAutomaton.Rows, _automatonController.CurrentAutomaton.Columns];
+            for (int i = 0; i < grid.GetLength(0); i++) {
+                for (int j = 0; j < grid.GetLength(1); j++) {
+                    if ((i + j) % 3 == 0)
+                        grid[i, j] = true;
+                }
+            }
+            AutomatonConfiguration config = new AutomatonConfiguration("Example config 1", grid);
+            _initialConfigurations.Add(config);
+
+            grid = new bool[_automatonController.CurrentAutomaton.Rows, _automatonController.CurrentAutomaton.Columns];
+            for (int i = 0; i < grid.GetLength(0); i++) {
+                for (int j = 0; j < grid.GetLength(1); j++) {
+                    if ((i + j) % 2 == 0)
+                        grid[i, j] = true;
+                }
+            }
+
+            config = new AutomatonConfiguration("Example config 2", grid);
+            _initialConfigurations.Add(config);
+        }
+
+
+
         /// <summary>
         /// InitUIState()
         /// 
@@ -167,6 +227,9 @@ namespace Cellular_Automaton
             PopulateGrid();
             ApplyRectStyle(); //flickers?
             //SetGridSizeMenu();
+
+            this.buildExampleListBoxModels();
+            this.initConfigsListBox.ItemsSource = _initialConfigurations;
 
             StatusGenCount.DataContext = _automatonController;
             RunSpeedSlider.DataContext = _automatonController;
@@ -310,6 +373,5 @@ namespace Cellular_Automaton
         }
 
         #endregion
-
     }
 }

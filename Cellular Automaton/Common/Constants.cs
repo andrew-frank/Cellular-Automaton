@@ -19,6 +19,9 @@ namespace Cellular_Automaton.Common
 
         public static readonly string PropertyChangedNameIsAlive = "Alive";
 
+        public static readonly string PropertyChangedNameRuleName = "RuleName";
+
+        public static readonly string PropertyChangedNameAutomatonConfigName = "AutomatonConfigName";
         #endregion
     }
 }

@@ -16,6 +16,20 @@ namespace Cellular_Automaton.Controllers
         #region Properties and ivars
         ////////////////////////////////////////////
 
+        private bool _randomModel = true;
+        public bool RandomModel
+        {
+            get
+            {
+                return _randomModel;
+            }
+
+            set
+            {
+                _randomModel = value;
+            }
+        }
+
         private Automaton _automaton;
         /// <summary>
         /// Holds a reference to the simulation model
@@ -131,6 +145,12 @@ namespace Cellular_Automaton.Controllers
             this.Generation = 0;
         }
 
+        public void SetNewConfiguration(AutomatonConfiguration config) 
+        {
+            this.IsPaused = true;
+            this.CurrentAutomaton.SetNewConfiguration(config);
+        }
+
         #endregion
 
 
@@ -151,8 +171,7 @@ namespace Cellular_Automaton.Controllers
         /// 
         private void TimerEvent(Object sender, EventArgs e)
         {
-
-            if (this != null) { //&& !this.IsPaused
+            if (this != null && !this.IsPaused) { //
                 //if (!_currentAutomaton._lm.EvolutionHalted || ALSettings.Default.HaltOnStability == false) {
                     _automaton.Evaluate();
                     this.Generation++;
@@ -168,7 +187,6 @@ namespace Cellular_Automaton.Controllers
 
 
         #endregion
-
 
     }
 }

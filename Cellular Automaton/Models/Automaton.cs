@@ -5,14 +5,33 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using Cellular_Automaton.Common;
+using System.Diagnostics;
 
 namespace Cellular_Automaton.Models
 {
+    public enum RulesLogicalOperator {
+        Conjunction = 0, //and
+        Disjunction, //or
+        ExclusiveDisjunction, //xor (either-or)
+        AlternativeDenial //not both
+    };
+
     public class Automaton : INotifyPropertyChanged
     {
         ////////////////////////////////////////////
         #region Properties and ivars
         ////////////////////////////////////////////
+
+        public RulesLogicalOperator LogicalOperator { get; set; }
+
+        private Rule[] _rules = new Rule[0];
+        public Rule[] Rules {
+            get { return _rules; }
+            set {
+                Debug.Assert(value != null);
+                _rules = value;
+            }
+        }
 
         public string Name { get; set; }
 
@@ -156,6 +175,11 @@ namespace Cellular_Automaton.Models
             InitArrays(rows, columns);
         }
 
+        public override string ToString() 
+        {
+            return this.Name;
+        }
+
         public void Reset()
         {
             _evaluated = false;
@@ -170,6 +194,34 @@ namespace Cellular_Automaton.Models
             }
         }
 
+        public void SetNewConfiguration(AutomatonConfiguration config) 
+        {
+            _evaluated = false;
+            CellBirths = 0;
+            CellDeaths = 0;
+            Population = 0;
+            PeakPopulation = 0;
+
+            Debug.Assert(config.Rows == this.Rows && config.Columns == this.Columns);
+            _startingGrid = config.Grid;
+
+            for (int row = 0; row < this.Rows; row++) {
+                for (int col = 0; col < this.Columns; col++)
+                    _cellGrid[row, col].Alive = _startingGrid[row, col];
+            }
+        }
+
+        public bool[,] GetCurrentWorkGridConfiguration() 
+        {
+            Debug.Assert(_cellGrid != null);
+            bool[,] grid = new bool[Rows, Columns];
+            for (int i = 0; i < Rows; i++) {
+                for (int j = 0; j < Columns; j++) {
+                    grid[i, j] = _cellGrid[i, j].Alive;
+                }
+            }
+            return grid;
+        }
 
         /// <summary>
         /// Called by the LifeSim class to iterate through the array and apply the game
@@ -177,8 +229,7 @@ namespace Cellular_Automaton.Models
         /// </summary>
         //TODO //////////////////
         public void Evaluate()
-        {
-            
+        {   
             bool[,] temp = new bool[Rows, Columns];
 
             int population = 0;
@@ -198,7 +249,9 @@ namespace Cellular_Automaton.Models
             for (int row = 0; row < Rows; row++) {
                 for (int col = 0; col < Columns; col++) {
                     _lastGrid[row, col] = _cellGrid[row, col].Alive;
-                    int adj = _random.Next(0,5); // CountAdjacent(row, col); //
+                    int adj = _random.Next(0,5);
+                    adj = CountAdjacent(row, col); //_random.Next(0,5); // CountAdjacent(row, col); //
+                    
                     if (_cellGrid[row, col].Alive) {
                         if (adj == 2 || adj == 3)
                             temp[row, col] = true;
@@ -230,8 +283,6 @@ namespace Cellular_Automaton.Models
             
             //if (AreEqualGrids(_cellGrid, _lastGrid))
             //    _evoHalted = true;
-            
-             
         }
 
 
@@ -315,8 +366,6 @@ namespace Cellular_Automaton.Models
             }
         }
 
-
-
         /// <summary>
         /// CountAdjacent(int, int)
         /// 
@@ -370,9 +419,6 @@ namespace Cellular_Automaton.Models
 
             return count;
         }
-
-
-
 
         #endregion
     }
