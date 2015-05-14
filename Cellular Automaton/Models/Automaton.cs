@@ -14,7 +14,8 @@ namespace Cellular_Automaton.Models
         Conjunction = 0, //and
         Disjunction, //or
         ExclusiveDisjunction, //xor (either-or)
-        AlternativeDenial //not both
+        AlternativeDenial, //not both (nand)
+        JoinDenial //nor
     };
 
     public class Automaton : INotifyPropertyChanged
@@ -50,7 +51,6 @@ namespace Cellular_Automaton.Models
                     PropertyChanged(this, new PropertyChangedEventArgs(Constants.PropertyChangedNameAutomatonName));
             }
         }
-
 
         public int Columns  {  get; private set; }
 
@@ -120,7 +120,6 @@ namespace Cellular_Automaton.Models
 
         private bool[,] _startingGrid = null;
 
-        private Cell[,] _workGrid = null;
 
         #endregion
 
@@ -159,7 +158,30 @@ namespace Cellular_Automaton.Models
             InitArrays(rows, columns);
         }
 
-        public override string ToString() {  return this.Name; }
+        public override string ToString() {
+            string logic = "";
+            switch (this.LogicalOperator) {
+                case RulesLogicalOperator.Conjunction:
+                    logic = "Conjunction";
+                    break;
+                case RulesLogicalOperator.Disjunction:
+                    logic = "Disjunction";
+                    break;
+                case RulesLogicalOperator.AlternativeDenial:
+                    logic = "Alternative Denial";
+                    break;
+                case RulesLogicalOperator.JoinDenial:
+                    logic = "Join Denial";
+                    break;
+                case RulesLogicalOperator.ExclusiveDisjunction:
+                    logic = "Exclusive Disjunction";
+                    break;
+                default:
+                    Debug.Assert(false, "Wrong logical operator");
+                    break;
+            }
+            return this.Name + "    (" + this.NeighbourhoodEnvironment + "-point, " + logic + ")"; 
+        }
 
         public void Reset()
         {
@@ -183,12 +205,21 @@ namespace Cellular_Automaton.Models
             Population = 0;
             PeakPopulation = 0;
 
-            Debug.Assert(config.Rows == this.Rows && config.Columns == this.Columns);
-            _startingGrid = config.Grid;
+            if (config.Rows == this.Rows && config.Columns == this.Columns) {
+                _startingGrid = config.Grid;
+                for (int row = 0; row < this.Rows; row++) {
+                    for (int col = 0; col < this.Columns; col++)
+                        _cellGrid[row, col].Alive = _startingGrid[row, col];
+                }
 
-            for (int row = 0; row < this.Rows; row++) {
-                for (int col = 0; col < this.Columns; col++)
-                    _cellGrid[row, col].Alive = _startingGrid[row, col];
+            } else {
+                this.InitArrays(config.Rows, config.Columns);
+                int xMax = Math.Min(config.Rows, this.Rows);
+                int yMax = Math.Min(config.Columns, this.Columns);
+                for (int row = 0; row < xMax ; row++) {
+                    for (int col = 0; col < yMax ; col++)
+                        _cellGrid[row, col].Alive = _startingGrid[row, col] = config.Grid[row, col];
+                }
             }
         }
 
@@ -206,7 +237,7 @@ namespace Cellular_Automaton.Models
 
 
         public void Evaluate()
-        {   
+        {
             bool[,] temp = new bool[Rows, Columns];
 
             int population = 0;
@@ -241,13 +272,54 @@ namespace Cellular_Automaton.Models
                         tempCounter++;
                     }
 
-                    foreach (bool b in results) {
-                        makeAlive = (b || makeAlive);
+                    bool firstRuleEval = true;
+                    switch (this.LogicalOperator) {
+                        case RulesLogicalOperator.Disjunction:
+                            foreach (bool b in results) {
+                                if (firstRuleEval) makeAlive = b;
+                                else makeAlive = (b || makeAlive);
+                                firstRuleEval = false;
+                            }
+                            break;
+                        case RulesLogicalOperator.Conjunction:
+                            foreach (bool b in results) {
+                                if (firstRuleEval) makeAlive = b;
+                                else makeAlive = (b && makeAlive);
+                                firstRuleEval = false;
+                            }
+                            break;
+                        case RulesLogicalOperator.AlternativeDenial:
+                            foreach (bool b in results) {
+                                if (firstRuleEval) makeAlive = b;
+                                else makeAlive = (b && makeAlive);
+                                firstRuleEval = false;
+                            }
+                            makeAlive = !makeAlive;
+                            break;
+                        case RulesLogicalOperator.ExclusiveDisjunction:
+                            foreach (bool b in results) {
+                                if (firstRuleEval) makeAlive = b;
+                                else makeAlive = (b ^ makeAlive);
+                                firstRuleEval = false;
+                            }
+                            break;
+                        case RulesLogicalOperator.JoinDenial:
+                            foreach (bool b in results) {
+                                if (firstRuleEval) makeAlive = b;
+                                else makeAlive = (b || makeAlive);
+                                firstRuleEval = false;
+                            }
+                            makeAlive = !makeAlive;
+                            break;
+                        default:
+                            foreach (bool b in results) {
+                                if (firstRuleEval) makeAlive = b;
+                                else makeAlive = (b || makeAlive);
+                                firstRuleEval = false;
+                            }
+                            Debug.Assert(false, "Unspecified logical operator");
+                            break;
                     }
-
-                    //works fine:
-                    //int adj = CountAdjacent(row, col);
-                    //makeAlive = (adj == 2);
 
                     if (_cellGrid[row, col].Alive) {
                         if (makeAlive)
@@ -281,7 +353,6 @@ namespace Cellular_Automaton.Models
 
         #endregion Public
 
-
         ////////////////////////////////////////////
         #region Private
         ////////////////////////////////////////////
@@ -289,7 +360,7 @@ namespace Cellular_Automaton.Models
         private void InitArrays(int rows, int columns)
         {
             if (columns <= 0 || rows <= 0)
-                throw (new System.ArgumentOutOfRangeException("InitArrays"));
+                throw (new System.ArgumentOutOfRangeException("Automaton: InitArrays()"));
 
             this.Columns = columns;
             this.Rows = rows;
@@ -301,64 +372,7 @@ namespace Cellular_Automaton.Models
                     _cellGrid[row, col] = new Cell();
             }
 
-            this.BuildWorkGrid();
-
             _startingGrid = new bool[this.Rows, this.Columns];
-        }
-
-
-        /// <summary>
-        /// BuildWorkGrid()
-        /// 
-        /// The work grid is two cells larger in each dimension, with the edge cells being
-        /// used for controlling how the model wraps. This method builds the work grid off
-        /// of the _cellGrid taking the GridType into account.
-        /// </summary>
-        private void BuildWorkGrid()
-        {
-            //_workGrid = new Cell[this.Rows + 4, this.Columns + 4];
-            //for (int row = 0 ; row < this.Rows + 2; row++) {
-            //    for (int col = 0 ; col < this.Columns + 2; col++) {
-            //        _workGrid[row, col] = new Cell();
-            //        if(row-2 > 0 && col-2 > 0)
-            //            _workGrid[row, col] = _cellGrid[row - 2, col - 2];
-            //    }
-            //}
-
-            //return;
-
-            _workGrid = new Cell[this.Rows + 2, this.Columns + 2];
-            for (int row = 0; row < this.Rows + 2; row++) {
-                for (int col = 0; col < this.Columns + 2; col++) {
-                    // Handle the corner conditions. A corner cell can only be
-                    // alive in the case of a torus. In all other grid types it
-                    // will be dead by one of the other edges. In the case of a
-                    // torus it wraps to the opposite corner.
-                    if (row == 0 && col == 0) {
-                        _workGrid[row, col] = new Cell();
-                    } else if (row == 0 && col == this.Columns + 1) {
-                        _workGrid[row, col] = new Cell();
-                    } else if (row == this.Rows + 1 && col == this.Columns + 1) {
-                        _workGrid[row, col] = new Cell();
-                    } else if (row == this.Rows + 1 && col == 0) {
-                        _workGrid[row, col] = new Cell();
-                    }
-                        // Handle the non-corner edges. They are dead in the
-                        // finite case, or the case where they lie along the top/bottom
-                        // in an x cylinder grid, or the left/right in a y cylinder grid.
-                        // Otherwise they wrap to the cell on the opposite side.
-                      else if (row == 0) {
-                        _workGrid[row, col] = new Cell();
-                    } else if (row == this.Rows + 1) {
-                        _workGrid[row, col] = new Cell();
-                    } else if (col == 0) {
-                        _workGrid[row, col] = new Cell();
-                    } else if (col == this.Columns + 1) {
-                        _workGrid[row, col] = new Cell();
-                    } else
-                        _workGrid[row, col] = _cellGrid[row - 1, col - 1];
-                }
-            }
         }
 
 
@@ -372,66 +386,10 @@ namespace Cellular_Automaton.Models
                 for(int j = -(size/2), y=0 ; j <= neighbourhood.GetLength(1)/2 ; j++, y++) {
                     if (row + i >= 0 && col + j >= 0 && row + i < _cellGrid.GetLength(0) && col + j < _cellGrid.GetLength(1))
                         neighbourhood[x, y] = _cellGrid[row + i, col + j].Alive;
-                    //if (row + i > 0 && col + i > 0 && row + i < _workGrid.GetLength(0) && col + i < _workGrid.GetLength(1))
-                    //    neighbourhood[x, y] = _workGrid[row + i, col + j].Alive;
                 }
             }
 
             return neighbourhood;
-        }
-
-
-        /// <summary>
-        /// CountAdjacent(int, int)
-        /// 
-        /// This function counts neighbors using the work grid, which returns
-        /// the correct values for edge cells depending on the grid type. The work
-        /// grid is two cells larger in both dimensions, with the outer cells used
-        /// for correct wrapping of neighbor checks, as set up in BuildWorkGrid().
-        /// The incoming coordinates are in the _cellGrid space, so this function
-        /// shifts them down and right 1 cell to get to _workGrid space.
-        /// </summary>
-        /// <param name="row"></param>
-        /// <param name="column"></param>
-        /// <returns></returns>
-        private int CountAdjacent(int row, int column) {
-            int count = 0;
-
-            row++;
-            column++;
-
-            // upper left
-            if (_workGrid[row - 1, column - 1].Alive)
-                count++;
-
-            if (_workGrid[row - 1, column].Alive)
-                count++;
-
-            // upper right
-            if (_workGrid[row - 1, column + 1].Alive)
-                count++;
-
-            // left
-            if (_workGrid[row, column - 1].Alive)
-                count++;
-
-            // right
-            if (_workGrid[row, column + 1].Alive)
-                count++;
-
-            // lower left
-            if (_workGrid[row + 1, column - 1].Alive)
-                count++;
-
-            // lower middle
-            if (_workGrid[row + 1, column].Alive)
-                count++;
-
-            // lower right
-            if (_workGrid[row + 1, column + 1].Alive)
-                count++;
-
-            return count;
         }
 
 

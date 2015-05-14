@@ -56,24 +56,35 @@ namespace Cellular_Automaton
                     this.disjunctionRadioBtn.IsChecked = false;
                     this.altDenialRadioBtn.IsChecked = false;
                     this.exlDisRadioBtn.IsChecked = false;
+                    this.joinDenialRadioBtn.IsChecked = false;
                     break;
                 case RulesLogicalOperator.Disjunction:
                     this.conjunctionRadioBtn.IsChecked = false;
                     this.disjunctionRadioBtn.IsChecked = true;
                     this.altDenialRadioBtn.IsChecked = false;
                     this.exlDisRadioBtn.IsChecked = false;
+                    this.joinDenialRadioBtn.IsChecked = false;
                     break;
                 case RulesLogicalOperator.AlternativeDenial:
                     this.conjunctionRadioBtn.IsChecked = false;
                     this.disjunctionRadioBtn.IsChecked = false;
                     this.altDenialRadioBtn.IsChecked = true;
                     this.exlDisRadioBtn.IsChecked = false;
+                    this.joinDenialRadioBtn.IsChecked = false;
                     break;
                 case RulesLogicalOperator.ExclusiveDisjunction:
                     this.conjunctionRadioBtn.IsChecked = false;
                     this.disjunctionRadioBtn.IsChecked = false;
                     this.altDenialRadioBtn.IsChecked = false;
                     this.exlDisRadioBtn.IsChecked = true;
+                    this.joinDenialRadioBtn.IsChecked = false;
+                    break;
+                case RulesLogicalOperator.JoinDenial:
+                    this.conjunctionRadioBtn.IsChecked = false;
+                    this.disjunctionRadioBtn.IsChecked = false;
+                    this.altDenialRadioBtn.IsChecked = false;
+                    this.exlDisRadioBtn.IsChecked = false;
+                    this.joinDenialRadioBtn.IsChecked = true;
                     break;
                 default:
                     Debug.Assert(false, "Wrong logical operator");
@@ -162,6 +173,12 @@ namespace Cellular_Automaton
             if (this.modifiedAutomaton == null)
                 return;
             this.modifiedAutomaton.LogicalOperator = RulesLogicalOperator.AlternativeDenial;
+        }
+
+        private void joinDenialRadioBtn_Checked(object sender, RoutedEventArgs e) {
+            if (this.modifiedAutomaton == null)
+                return;
+            this.modifiedAutomaton.LogicalOperator = RulesLogicalOperator.JoinDenial;
         }
     }
 }

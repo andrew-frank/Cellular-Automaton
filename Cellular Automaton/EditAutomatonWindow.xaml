@@ -1,7 +1,7 @@
 ﻿<Window x:Class="Cellular_Automaton.EditAutomatonWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        Title="EditAutomatonWindow" Height="350" Width="620" MinHeight="350" MinWidth="620" Loaded="Window_Loaded">
+        Title="EditAutomatonWindow" Height="402" Width="620" MinHeight="350" MinWidth="620" Loaded="Window_Loaded">
     
     <Grid>
         <Grid.RowDefinitions>
@@ -62,6 +62,7 @@
                     <RowDefinition Height="40"/>
                     <RowDefinition Height="40"/>
                     <RowDefinition Height="40"/>
+                    <RowDefinition Height="40"/>
                     <RowDefinition/>
                 </Grid.RowDefinitions>
                 <Label Grid.Row="0" VerticalAlignment="Bottom" HorizontalAlignment="Stretch" 
@@ -75,6 +76,8 @@
                                  HorizontalAlignment="Stretch" Margin="10" Checked="exlDisRadioBtn_Checked" />
                 <RadioButton x:Name="altDenialRadioBtn" Grid.Row="4" Content="Alternative Denial" VerticalAlignment="Center" 
                                  HorizontalAlignment="Stretch" Margin="10" Checked="altDenialRadioBtn_Checked"/>
+                <RadioButton x:Name="joinDenialRadioBtn" Grid.Row="5" Content="Join Denial" VerticalAlignment="Center" 
+                                 HorizontalAlignment="Stretch" Margin="10" Checked="joinDenialRadioBtn_Checked"/>
             </Grid>
 
             <Grid Grid.Column="2">

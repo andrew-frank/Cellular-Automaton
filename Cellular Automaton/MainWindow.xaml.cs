@@ -80,6 +80,7 @@ namespace Cellular_Automaton
             int x = 0, y = 0;
             bool parsed = false;
 
+            _automatonController.IsPaused = true;
             parsed = (Int32.TryParse(this.xGridSizeTextBox.Text, out x) && Int32.TryParse(this.yGridSizeTextBox.Text, out y));
 
             bool valid = parsed && (x > 0 && y > 0);
@@ -89,6 +90,27 @@ namespace Cellular_Automaton
                 this.setGridSizeControls();
                 return;
             }
+
+            bool[,] workGrid = this._automatonController.CurrentAutomaton.GetCurrentWorkGridConfiguration();
+            bool[,] grid = new bool[x,y];
+            int xMax = Math.Min(workGrid.GetLength(0), grid.GetLength(0));
+            int yMax = Math.Min(workGrid.GetLength(1), grid.GetLength(1));
+
+            for (int i = 0; i < (xMax); i++) {
+                for (int j = 0; j < (yMax) ; j++)
+                    grid[i, j] = workGrid[i, j];
+            }
+
+            AutomatonConfiguration config = new AutomatonConfiguration("", grid);
+
+            if (workGrid.GetLength(0) == x && workGrid.GetLength(1) == y) {
+                    this._automatonController.SetNewConfiguration(config);
+            } else {
+                _automatonController.SetNewConfiguration(config);
+                this.NewGame(this._automatonController.CurrentAutomaton);
+            }
+
+            this.setGridSizeControls();
         }
 
 
@@ -97,9 +119,19 @@ namespace Cellular_Automaton
             if (item == null)
                 return;
             Debug.Assert(item is AutomatonConfiguration);
+            
             AutomatonConfiguration config = (AutomatonConfiguration)item;
             _automatonController.IsPaused = true;
-            _automatonController.SetNewConfiguration(config);
+
+            if (config.Rows == this._automatonController.CurrentAutomaton.Rows 
+                && config.Columns == this._automatonController.CurrentAutomaton.Columns) {
+                _automatonController.SetNewConfiguration(config);
+
+            } else {
+                _automatonController.SetNewConfiguration(config);
+                this.NewGame(this._automatonController.CurrentAutomaton);
+            }
+
             this.setGridSizeControls();
         }
 
@@ -269,16 +301,68 @@ namespace Cellular_Automaton
             config = new AutomatonConfiguration("Example config 2", grid);
             _initialConfigurations.Add(config);
 
-            ///models
+            grid = new bool[_automatonController.CurrentAutomaton.Rows, _automatonController.CurrentAutomaton.Columns];
+            for (int i = 0; i < grid.GetLength(0); i++) {
+                for (int j = 0; j < grid.GetLength(1); j++) {
+                    if (_random.Next(0, 100)%3 == 0)
+                        grid[i, j] = true;
+                }
+            }
+
+            config = new AutomatonConfiguration("Example config 3", grid);
+            _initialConfigurations.Add(config);
+
+            //models
+
+            //m1
             Automaton model = new Automaton();
-            model.Name = "Game of life";
-            model.Rules.Add(new Rule("Life rule", 4, RuleType.Count) );
+            model.Name = "Game of life #1";
+            model.NeighbourhoodEnvironment = 4;
+            model.Rules.Add(new Rule("Life rule #1", model.NeighbourhoodEnvironment, RuleType.Count) );
             _automatonModels.Add(model);
 
+            //m2
             model = new Automaton();
-            model.Name = "Empty model";
+            model.Name = "Matching model #1";
+            model.NeighbourhoodEnvironment = 8;
+            Rule r = new Rule("Match rule #1", model.NeighbourhoodEnvironment, RuleType.Match);
+            r.AllowedNeighbourhood = new bool[9];
+            for (int i = 0 ; i < r.AllowedNeighbourhood.GetLength(0) ; i++) {
+                if (i % 2 == 0)
+                    r.AllowedNeighbourhood[i] = true;
+            }
+            model.Rules.Add(r);
+            
+            r = new Rule("Match rule #2", model.NeighbourhoodEnvironment, RuleType.Match);
+            r.AllowedNeighbourhood = new bool[9];
+            for (int i = 0; i < r.AllowedNeighbourhood.GetLength(0); i++) {
+                if (i % 3 == 0)
+                    r.AllowedNeighbourhood[i] = true;
+            }
+            model.Rules.Add(r);
+
+            _automatonModels.Add(model);
+
+            //m3
+            model = new Automaton();
+            model.Name = "Game of life #2";
+            model.NeighbourhoodEnvironment = 8;
+            model.Rules.Add(new Rule("Life rule #1", model.NeighbourhoodEnvironment, RuleType.Count));
+            _automatonModels.Add(model);
+
+            //m4
+            model = new Automaton();
+            model.Name = "Game of life #4";
+            model.NeighbourhoodEnvironment = 24;
+            model.Rules.Add(new Rule("Life rule #1", model.NeighbourhoodEnvironment, RuleType.Count));
+            int[] t = new int[2];
+            t[0] = 1;
+            t[1] = 4;
+            model.Rules.First().AllowedAdjecentCount = t;
             _automatonModels.Add(model);
         }
+
+        private Random _random = new Random();
 
 
         private void InitUIState()
