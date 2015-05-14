@@ -76,6 +76,21 @@ namespace Cellular_Automaton
         }
 
 
+        private void applyGridSizeBtn_Click(object sender, RoutedEventArgs e) {
+            int x = 0, y = 0;
+            bool parsed = false;
+
+            parsed = (Int32.TryParse(this.xGridSizeTextBox.Text, out x) && Int32.TryParse(this.yGridSizeTextBox.Text, out y));
+
+            bool valid = parsed && (x > 0 && y > 0);
+            if (!valid) {
+                MessageBox.Show("Only positive integer numbers are acceptable", "Couldn't parse grid size",
+                        MessageBoxButton.OK, MessageBoxImage.Warning);
+                this.setGridSizeControls();
+                return;
+            }
+        }
+
 
         private void loadInitStateBtn_Click(object sender, RoutedEventArgs e) {
             var item = this.initConfigsListBox.SelectedItem;
@@ -85,6 +100,7 @@ namespace Cellular_Automaton
             AutomatonConfiguration config = (AutomatonConfiguration)item;
             _automatonController.IsPaused = true;
             _automatonController.SetNewConfiguration(config);
+            this.setGridSizeControls();
         }
 
         private void saveInitStateBtn_Click(object sender, RoutedEventArgs e) {
@@ -94,6 +110,15 @@ namespace Cellular_Automaton
                 AutomatonConfiguration config = new AutomatonConfiguration(dialog.nameTextBox.Text, grid);
                 this._initialConfigurations.Add(config);
             }
+        }
+
+        private void deleteInitStateBtn_Click(object sender, RoutedEventArgs e) {
+            var item = this.initConfigsListBox.SelectedItem;
+            if (item == null)
+                return;
+            Debug.Assert(item is AutomatonConfiguration);
+            AutomatonConfiguration config = (AutomatonConfiguration)item;
+            this._initialConfigurations.Remove(config);
         }
 
         private void loadAutomatonBtn_Click(object sender, RoutedEventArgs e) {
@@ -111,32 +136,37 @@ namespace Cellular_Automaton
             int index = this.modelsListBox.SelectedIndex;
             if (item == null)
                 return;
+            _automatonController.IsPaused = true;
             Debug.Assert(item is Automaton);
             Automaton automaton = (Automaton)item;
-            _automatonController.IsPaused = true;
             EditAutomatonWindow wnd = new EditAutomatonWindow(automaton);
-            //wnd.originalAutomaton = automaton;
             if (wnd.ShowDialog() == true) {
                 _automatonModels.Remove(automaton);
-                _automatonModels.Insert(index, wnd.automaton);
+                _automatonModels.Insert(index, wnd.modifiedAutomaton);
             }
         }
 
 
         private void newAutomatonModelBtn_Click(object sender, RoutedEventArgs e) 
         {
+            _automatonController.IsPaused = true;
+            Automaton automaton = new Automaton(_automatonController.CurrentAutomaton.Rows, _automatonController.CurrentAutomaton.Columns);
+            EditAutomatonWindow wnd = new EditAutomatonWindow(automaton);
+            if (wnd.ShowDialog() == true) {
+                _automatonModels.Add(wnd.modifiedAutomaton);
+            }
+        }
+
+
+        private void deleteAutomatonModelBtn_Click(object sender, RoutedEventArgs e) {
             var item = this.modelsListBox.SelectedItem;
+            int index = this.modelsListBox.SelectedIndex;
             if (item == null)
                 return;
             Debug.Assert(item is Automaton);
             Automaton automaton = (Automaton)item;
-            _automatonController.IsPaused = true;
-            EditAutomatonWindow wnd = new EditAutomatonWindow();
-            if (wnd.ShowDialog() == true) {
-                _automatonModels.Add(wnd.automaton);
-            }
+            this._automatonModels.Remove(automaton);
         }
-
 
 
         private void Window_Loaded(object sender, RoutedEventArgs e) {
@@ -172,37 +202,17 @@ namespace Cellular_Automaton
             _automatonController.Reset();
         }
 
-        /// <summary>
-        /// Rect_OnMouseDown(Object, MouseButtonEventArgs)
-        /// 
-        /// Handles the mouse down event on a Rectangle in the grid, and if the game is
-        /// in the paused state (editable) flips the cell state. Since we allow dragging
-        /// _lastMouseCell is used to avoid the effects of repeated MouseEnter events
-        /// getting fired.
-        /// </summary>
-        /// <param name="sender"></param>
-        /// <param name="e"></param>
+
         public void Rect_OnMouseDown(Object sender, MouseButtonEventArgs e)
         {
-            //if (_automatonController.IsPaused) { //&& (_automatonController.Generation == 0)
                 Cell cell = ((Rectangle)sender).DataContext as Cell;
                 if (cell != null) {
                     _lastMouseCell = cell;
                     cell.Alive = !cell.Alive;
-                    //UIStateChange(UIStateChanges.ModelCellEdited);
                 } else throw (new System.InvalidOperationException("Rect_OnMouseDown"));
-            //}
         }
 
 
-        /// <summary>
-        /// Rect_OnMouseEnter(Object, MouseEventArgs)
-        /// 
-        /// Handles the mouseover event for an Ellipse. If the game is paused and the mouse
-        /// is entering a new cell, flip that cell's state.
-        /// </summary>
-        /// <param name="sender"></param>
-        /// <param name="e"></param>
         public void Rect_OnMouseEnter(Object sender, MouseEventArgs e)
         {
             if (_editMode) {
@@ -271,20 +281,12 @@ namespace Cellular_Automaton
         }
 
 
-
-        /// <summary>
-        /// InitUIState()
-        /// 
-        /// This function peforms common setup work when a game is created or loaded.
-        /// Initializes the grid and populates it, sets up some data contexts, and sets
-        /// the window title.
-        /// </summary>
         private void InitUIState()
         {
             InitGrid();
             PopulateGrid();
             ApplyRectStyle(); //flickers?
-            //SetGridSizeMenu();
+            setGridSizeControls();
 
             this.initConfigsListBox.ItemsSource = _initialConfigurations;
             this.modelsListBox.ItemsSource = _automatonModels;
@@ -297,15 +299,6 @@ namespace Cellular_Automaton
             PeakPopulationCount.DataContext = _automatonController.CurrentAutomaton;
         }
 
-
-        /// <summary>
-        /// InitGrid()
-        /// 
-        /// Called from the OnLoaded event handler for the main window to initialize the
-        /// UI display grid with the appropriate number of rows and columns based on the
-        /// _lm.Rows and _lm.Columns properties. It then adds an ellipse to each cell and
-        /// sets its style.
-        /// </summary>
         private void InitGrid()
         {
             this.automatonGrid.Children.Clear();
@@ -320,13 +313,6 @@ namespace Cellular_Automaton
         }
 
 
-        /// <summary>
-        /// NewGame()
-        /// 
-        /// Does the grunt work of initializing a new game with an empty grid. Initializes
-        /// the model and controller, populates the grid, and wires up some UI fields by setting
-        /// data contexts for items with property bindings.
-        /// </summary>
         private void NewGame()
         {
             if (_automatonController == null)
@@ -345,28 +331,6 @@ namespace Cellular_Automaton
             _automatonController.IsPaused = true;
         }
 
-        /// <summary>
-        /// ApplyRectStyle()
-        /// 
-        /// If you look at the source you'll see that this function is only called when a new
-        /// grid is being initialized, and when the cell brush has been changed. It builds a new
-        /// style that sets the Fill property of a rectangle to the new brush, and then goes
-        /// through the children of the grid setting this style. The style is based on an
-        /// existing style that binds the opacity property to govern visibility. So why go to
-        /// all this trouble to change fill brushes? Why not just set the fill property on the
-        /// rects and be done with it? Here's the issue: again, opacity is controlled by a
-        /// binding in a style. Element properties override style settings, and they happen at
-        /// different times too. If in the process of creating a new grid I set the rectangle
-        /// DataContext to point to a LifeCell, which will drive the opacity binding, and then
-        /// set the Fill property directly, sometimes, depending on timing, I get a repaint
-        /// before the opacity property is correctly set, and the grid renders all the cells
-        /// visible. It looks messy, and I don't want the grid repainted until the state of all
-        /// the cells is correct. I'm sure there must be other ways to handle suppressing the
-        /// repaint, but the issue there is that the flash happens after I return control to
-        /// the message pump. If I somehow surpress the repaint when will I unsurpress it? The
-        /// best way around this that I have found so far is to do as I have below: change
-        /// brushes by building a new style and then applying that style.
-        /// </summary>
         private void ApplyRectStyle()
         {
             Brush cellBrush = this.CellBrush;
@@ -394,14 +358,6 @@ namespace Cellular_Automaton
         }
 
 
-        /// <summary>
-        /// PopulateGrid()
-        /// 
-        /// Does the work of setting up the rectangles in the cells of the life grid. Creates
-        /// the rectangles and assigns them to the grid, adds them to the child collection,
-        /// sets up rectangle data contexts for the rect->cell link, sets the rectangle style,
-        /// and wires up the rectangle mouse events
-        /// </summary>
         private void PopulateGrid()
         {
             for (int row = 0; row < _automatonController.CurrentAutomaton.Rows; row++) {
@@ -423,16 +379,10 @@ namespace Cellular_Automaton
             }
         }
 
-
-        /// <summary>
-        /// SetGridSizeMenu()
-        /// 
-        /// Called from InitUIState to update the state of the grid size menu
-        /// to reflect the size of a model.
-        /// </summary>
-        private void SetGridSizeMenu()
+        private void setGridSizeControls()
         {
-            //MenuGridSizeText.Text = "r:" + _automatonController.CurrentAutomaton.Rows.ToString() + " c:" + _automatonController.CurrentAutomaton.Columns.ToString();
+            this.xGridSizeTextBox.Text = "" + this._automatonController.CurrentAutomaton.Rows;
+            this.yGridSizeTextBox.Text = "" + this._automatonController.CurrentAutomaton.Columns;
         }
 
         #endregion

@@ -23,6 +23,9 @@ namespace Cellular_Automaton.Models
         #region Properties and ivars
         ////////////////////////////////////////////
 
+        public static long AutomatonCount = 0;
+
+
         public int NeighbourhoodEnvironment = 4;
 
         public RulesLogicalOperator LogicalOperator { get; set; }
@@ -36,7 +39,7 @@ namespace Cellular_Automaton.Models
             }
         }
 
-        private string _name = "";
+        private string _name = "New automaton #" + Automaton.AutomatonCount;
         public string Name {
             get {
                 return _name;
@@ -48,22 +51,12 @@ namespace Cellular_Automaton.Models
             }
         }
 
-        /// <summary>
-        /// The number of columns across the life grid
-        /// </summary>
+
         public int Columns  {  get; private set; }
 
-        /// <summary>
-        /// The number of rows down the life grid
-        /// </summary>
         public int Rows { get; private set; }
 
 
-        /// <summary>
-        /// 
-        /// Array of Cells - used as data context in binding to the UI.
-        /// 
-        /// </summary>
         private Cell[,] _cellGrid = null;
         public Cell[,] CellGrid
         {
@@ -75,11 +68,6 @@ namespace Cellular_Automaton.Models
             }
         }
 
-        /// <summary>
-        /// CellBirths
-        /// 
-        /// Counts the number of cell births. Fires change notification.
-        /// </summary>
         private int _cellBirths = 0;
         public int CellBirths
         {
@@ -91,11 +79,6 @@ namespace Cellular_Automaton.Models
             }
         }
 
-        /// <summary>
-        /// CellDeaths
-        /// 
-        /// Counts the number of cell deaths. Fires change notification.
-        /// </summary>
         private int _cellDeaths = 0;
         public int CellDeaths
         {
@@ -107,12 +90,6 @@ namespace Cellular_Automaton.Models
             }
         }
 
-
-        /// <summary>
-        /// PeakPopulation
-        /// 
-        /// Tracks the maximum population of cells on the grid. Fires change notification.
-        /// </summary>
         private int _peakPopulation = 0;
         public int PeakPopulation
         {
@@ -124,12 +101,6 @@ namespace Cellular_Automaton.Models
             }
         }
 
-        /// <summary>
-        /// Population
-        /// 
-        /// Tracks the current population of the grid at the close of each tick.
-        /// Fires change notification.
-        /// </summary>
         private int _population = 0;
         public int Population
         {
@@ -141,32 +112,15 @@ namespace Cellular_Automaton.Models
             }
         }
 
-        /// <summary>
-        /// Evaluated
-        /// 
-        /// True if the model has been evaluated at least once, meaning that the data
-        /// in _startingGrid is valid
-        /// </summary>
+
+        //true = model has been evaluated at least once==_startingGrid is valid
         bool _evaluated = false;
         public bool Evaluated { get { return _evaluated; } }
 
 
-        // holds the starting grid state so we can revert on demand
         private bool[,] _startingGrid = null;
 
-        // holds the working grid, which is two cells larger than
-        // the cell grid on each dimension, with the edge cells
-        // being set up to wrap correctly according to the 
-        // grid type. See BuildWorkGrid()
         private Cell[,] _workGrid = null;
-
-        // holds the state of the last calculate grid, used to 
-        // detect a halt
-        private bool[,] _lastGrid = null;
-
-
-        private Random _random = new Random();
-
 
         #endregion
 
@@ -181,18 +135,31 @@ namespace Cellular_Automaton.Models
         public Automaton()
         {
             InitArrays(AutomatonSettings.defaults.gridWidth, AutomatonSettings.defaults.gridHeight);
-            this.Rules.Add(new Rule("Life rule", 4, RuleType.Count));
+            Automaton.AutomatonCount++;
+        }
+
+        public Automaton(Automaton automaton) 
+        {
+            Automaton.AutomatonCount++;
+            this.Rows = automaton.Rows;
+            this.Columns = automaton.Columns;
+            this.Name = automaton.Name;
+            this.LogicalOperator = automaton.LogicalOperator;
+            this.Rules = new ObservableCollection<Rule>();
+            foreach (Rule rule in automaton.Rules) {
+                this.Rules.Add(new Rule(rule));
+            }
+            this.NeighbourhoodEnvironment = automaton.NeighbourhoodEnvironment;
+            InitArrays(automaton.Rows, automaton.Columns);
         }
 
         public Automaton(int rows, int columns)
         {
+            Automaton.AutomatonCount++;
             InitArrays(rows, columns);
         }
 
-        public override string ToString() 
-        {
-            return this.Name;
-        }
+        public override string ToString() {  return this.Name; }
 
         public void Reset()
         {
@@ -237,11 +204,7 @@ namespace Cellular_Automaton.Models
             return grid;
         }
 
-        /// <summary>
-        /// Called by the LifeSim class to iterate through the array and apply the game
-        /// rules once.
-        /// </summary>
-        //TODO //////////////////
+
         public void Evaluate()
         {   
             bool[,] temp = new bool[Rows, Columns];
@@ -252,7 +215,7 @@ namespace Cellular_Automaton.Models
                 _evaluated = true;
                 for (int row = 0; row < Rows; row++) {
                     for (int col = 0; col < Columns; col++) {
-                        _startingGrid[row, col] = _lastGrid[row, col] = _cellGrid[row, col].Alive;
+                        _startingGrid[row, col] = _cellGrid[row, col].Alive;
                         if (_startingGrid[row, col])
                             _peakPopulation++;
                     }
@@ -260,72 +223,45 @@ namespace Cellular_Automaton.Models
                 PeakPopulation = _peakPopulation;
             }
 
+            bool[] results = new bool[Rules.Count];
+            int tempCounter = 0;
+            bool[,] neighb;
+            bool[] neighbourhood;
+            bool makeAlive = false;
+
             for (int row = 0; row < Rows; row++) {
                 for (int col = 0; col < Columns; col++) {
-                    _lastGrid[row, col] = _cellGrid[row, col].Alive;
-                    int adj = _random.Next(0, 5);
-                    adj = CountAdjacent(row, col); //_random.Next(0,5); // CountAdjacent(row, col); //
+                    makeAlive = false;
+                    neighb = GetNeighbourhood(row, col);
+                    neighbourhood = RulesExtensions.neighbourhood2dTo1dArray(this.NeighbourhoodEnvironment, neighb);
+
+                    tempCounter = 0;
+                    foreach (Rule rule in Rules) {
+                        results[tempCounter] = rule.EvaluateNeighbours(neighbourhood);
+                        tempCounter++;
+                    }
+
+                    foreach (bool b in results) {
+                        makeAlive = (b || makeAlive);
+                    }
+
+                    //works fine:
+                    //int adj = CountAdjacent(row, col);
+                    //makeAlive = (adj == 2);
 
                     if (_cellGrid[row, col].Alive) {
-                        if (adj == 2 || adj == 3)
+                        if (makeAlive)
                             temp[row, col] = true;
                         else
                             CellDeaths++;
                     } else {
-                        if (adj == 3) {
+                        if (makeAlive) {
                             temp[row, col] = true;
                             CellBirths++;
                         }
                     }
                 }
             }
-
-            //bool[] results = new bool[Rules.Count];
-            //int tempCounter = 0;
-            //bool[,] neighb;
-            //bool[] neighbourhood;
-            //bool makeAlive = false;
-
-            //for (int row = 0; row < Rows; row++) {
-            //    for (int col = 0; col < Columns; col++) {
-            //        _lastGrid[row, col] = _cellGrid[row, col].Alive;
-
-            //        makeAlive = false;
-            //        neighb = GetNeighbourhood(row, col);
-            //        neighbourhood = new bool[neighb.GetLength(0) * neighb.GetLength(1)];
-
-            //        tempCounter = 0;
-            //        for (int k = 0; k < neighb.GetLength(0); k++) {
-            //            for (int l = 0; l < neighb.GetLength(1); l++) {
-            //                neighbourhood[tempCounter] = neighb[k, l];
-            //                tempCounter++;
-            //            }
-            //        }
-
-            //        tempCounter = 0;
-            //        foreach (Rule rule in Rules) {
-            //            results[tempCounter] = rule.EvaluateNeighbours(neighbourhood);
-            //            tempCounter++;
-            //        }
-
-            //        foreach (bool b in results) {
-            //            makeAlive = (b || makeAlive);
-            //        }
-
-            //        if (_cellGrid[row, col].Alive) {
-            //            if (makeAlive)
-            //                temp[row, col] = true;
-            //            else
-            //                CellDeaths++;
-            //        } else {
-            //            if (makeAlive) {
-            //                temp[row, col] = true;
-            //                CellBirths++;
-            //            }
-            //        }
-            //    }
-            //}
-
 
             for (int row = 0; row < Rows; row++) {
                 for (int col = 0; col < Columns ; col++) {
@@ -340,9 +276,6 @@ namespace Cellular_Automaton.Models
             Population = population;
             if (_peakPopulation < population)
                 PeakPopulation = population;
-            
-            //if (AreEqualGrids(_cellGrid, _lastGrid))
-            //    _evoHalted = true;
         }
 
 
@@ -353,14 +286,6 @@ namespace Cellular_Automaton.Models
         #region Private
         ////////////////////////////////////////////
 
-        /// <summary>
-        /// InitArrays(int, int)
-        /// 
-        /// Creates Cell array and assign values to related private members
-        /// 
-        /// </summary>
-        /// <param name="columns">int, the width (columns) of the grid to be created</param>
-        /// <param name="rows">int, the height (rows) of the grid to be created</param>
         private void InitArrays(int rows, int columns)
         {
             if (columns <= 0 || rows <= 0)
@@ -379,7 +304,6 @@ namespace Cellular_Automaton.Models
             this.BuildWorkGrid();
 
             _startingGrid = new bool[this.Rows, this.Columns];
-            _lastGrid = new bool[this.Rows, this.Columns];
         }
 
 
@@ -440,24 +364,16 @@ namespace Cellular_Automaton.Models
 
         private bool[,] GetNeighbourhood(int row, int col) 
         {
-            int size = -1;
-            if (NeighbourhoodEnvironment == 4) {
-                size = 3;
-            } else if (NeighbourhoodEnvironment == 8) {
-                size = 3;
-            } else if (NeighbourhoodEnvironment == 24) {
-                size = 5;
-            }
-
+            int size = RulesExtensions.gridWidthForNeighbourhoodCount(this.NeighbourhoodEnvironment);
             Debug.Assert(size > 0 && size%2!=0);
-            bool[,] neighbourhood = new bool[size, size];
 
-            for (int i = -(size/2), x=0 ; i < neighbourhood.GetLength(0)/2 ; i++, x++) {
-                for(int j = -(size/2), y=0 ; j < neighbourhood.GetLength(1)/2 ; j++, y++) {
-                    if (row + i > 0 && col + i > 0 && row + i < _workGrid.GetLength(0) && col + i < _workGrid.GetLength(1)) {
-                        bool alive = _workGrid[row + i, col + j].Alive;
-                        neighbourhood[x, y] = alive;
-                    }
+            bool[,] neighbourhood = new bool[size, size];
+            for (int i = -(size/2), x=0 ; i <= neighbourhood.GetLength(0)/2 ; i++, x++) {
+                for(int j = -(size/2), y=0 ; j <= neighbourhood.GetLength(1)/2 ; j++, y++) {
+                    if (row + i >= 0 && col + j >= 0 && row + i < _cellGrid.GetLength(0) && col + j < _cellGrid.GetLength(1))
+                        neighbourhood[x, y] = _cellGrid[row + i, col + j].Alive;
+                    //if (row + i > 0 && col + i > 0 && row + i < _workGrid.GetLength(0) && col + i < _workGrid.GetLength(1))
+                    //    neighbourhood[x, y] = _workGrid[row + i, col + j].Alive;
                 }
             }
 

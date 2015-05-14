@@ -93,6 +93,28 @@ namespace Cellular_Automaton.Models
             this.Type = type;
         }
 
+        public Rule(Rule rule) 
+        {
+            Rule.RuleCount++;
+            this.Name = rule.Name;
+            this.NeighbourhoodCount = rule.NeighbourhoodCount;
+            this.AllowedAdjecentCount = new int[rule.AllowedAdjecentCount.GetLength(0)];
+            int i = 0;
+            foreach (int x in rule.AllowedAdjecentCount) {
+                this.AllowedAdjecentCount[i] = x;
+                i++;
+            }
+
+            i = 0;
+            this.AllowedNeighbourhood = new bool[rule.AllowedNeighbourhood.GetLength(0)];
+            foreach (bool x in rule.AllowedNeighbourhood) {
+                this.AllowedNeighbourhood[i] = x;
+                i++;
+            }
+
+            this.Type = rule.Type;
+        }
+
         protected Rule() { }
 
 
@@ -106,7 +128,6 @@ namespace Cellular_Automaton.Models
             set { _allowedAdjecentCount = value; }
         }
 
-
         public bool EvaluateCountNeighbours(bool[] neighbourhood) {
             int adjecent = this.CountAdjecent(neighbourhood);
             foreach (int allowedCount in this.AllowedAdjecentCount) {
@@ -118,16 +139,16 @@ namespace Cellular_Automaton.Models
         }
 
         private int CountAdjecent(bool[] neighbourhood) {
-            int evaluatedCell = neighbourhood.EvaluatedCellIndex();
             int i = 0, counter = 0;
             foreach (bool state in neighbourhood) {
-                if (state && i != evaluatedCell)
+                if (state && isNeighbourValidAtIndex(i))
                     counter++;
                 i++;
             }
 
             return counter;
         }
+
 
         #endregion
 
@@ -136,64 +157,130 @@ namespace Cellular_Automaton.Models
         private bool[] _allowedNeighbourhood;
         public bool[] AllowedNeighbourhood {
             get {
-                Debug.Assert(_allowedNeighbourhood != null);
-
                 if (_allowedNeighbourhood == null)
-                    _allowedNeighbourhood = new bool[this.NeighbourhoodCount];
-                else if (_allowedNeighbourhood.GetLength(0) != this.NeighbourhoodCount)
+                    _allowedNeighbourhood = new bool[RulesExtensions.neighbourhood1DArrLengthFromNeighbourhoodCount(this.NeighbourhoodCount)];
+                else if (_allowedNeighbourhood.GetLength(0) != RulesExtensions.neighbourhood1DArrLengthFromNeighbourhoodCount(this.NeighbourhoodCount))
                     throw new Exception("Nonmatching  neighbourhood environment count");
 
                 return _allowedNeighbourhood;
             }
 
             set {
-                if (value.GetLength(0) != this.NeighbourhoodCount)
+                if (value.GetLength(0) != RulesExtensions.neighbourhood1DArrLengthFromNeighbourhoodCount(this.NeighbourhoodCount))
                     throw new Exception("Invalid  neighbourhood environment count");
                 _allowedNeighbourhood = value;
             }
         }
 
         public bool EvaluateMatchNeighbours(bool[] neighbourhood) {
-            int evaluatedCell = neighbourhood.EvaluatedCellIndex();
             int i = 0;
             foreach (bool state in neighbourhood) {
                 if (state != _allowedNeighbourhood[i]) {
-                    if (i != evaluatedCell)
+                    if (isNeighbourValidAtIndex(i))
                         return false;
                 }
                 i++;
             }
-
             return true;
+        }
+
+        private bool isNeighbourValidAtIndex(int index)  {
+            switch (this.NeighbourhoodCount) {
+                case 4:
+                case 8:
+                    if (index == 4)
+                        return false;
+                    break;
+                case 24:
+                    if (index == 12)
+                        return false;
+                    break;
+                default:
+                    Debug.Assert(false, "Unspecified neighbourhood environment count");
+                    throw new Exception("Unspecified neighbourhood environment count");
+            }
+
+            if (this.NeighbourhoodCount != 4)
+                return true;
+            return !(index == 0 || index == 2 || index == 6 || index == 8);
         }
 
         #endregion
     }
 
-    static class RulesExtensions
+    public static class RulesExtensions
     {
-        public static int EvaluatedCellIndex(this bool[] neighbourhood) {
-            switch (neighbourhood.GetLength(0)) {
-                case 5:
-                    return 3;
-                case 9:
-                    return 5;
-                case 25:
-                    return 13;
+        public static int neighbourhood1DArrLengthFromNeighbourhoodCount(int neighbourhoodCount) {
+            switch (neighbourhoodCount) {
+                case 4:
+                case 8:
+                    return 9;
+                case 24:
+                    return 25;
                 default:
-                    Debug.Assert(false, "Unspecified neighbourhood environment count");
-                    throw new Exception("Unspecified neighbourhood environment count");
+                    Debug.Assert(false, "Wrong neighbourhood count");
+                    return -1;
             }
         }
+
+        public static bool[] neighbourhood2dTo1dArray(int neighbourhoodCount, bool[,] neighbourhood) {
+            bool[] arr = new bool[neighbourhood.GetLength(0) * neighbourhood.GetLength(1)];
+
+            int tempCounter = 0;
+            int gridWidth = RulesExtensions.gridWidthForNeighbourhoodCount(neighbourhoodCount);
+
+            for (int k = 0; k < neighbourhood.GetLength(0); k++) {
+                for (int l = 0; l < neighbourhood.GetLength(1); l++) {
+                    arr[tempCounter] = neighbourhood[k, l];
+                    tempCounter++;
+                }
+            }
+            return arr;
+        }
+
+        public static bool[] cellGridTo1dBoolArr(int neighbourhoodCount, Cell[,] grid) {
+            bool[,] arr1 = (RulesExtensions.cellGridToBool2dArr(neighbourhoodCount, grid));
+            return RulesExtensions.neighbourhood2dTo1dArray(neighbourhoodCount, arr1);
+        }
+
+        public static bool[,] cellGridToBool2dArr(int neighbourhoodCount , Cell[,] grid) {
+            int gridWidth = RulesExtensions.gridWidthForNeighbourhoodCount(neighbourhoodCount);
+            bool[,] arr = new bool[gridWidth, gridWidth];
+            for (int i = 0; i < grid.GetLength(0); i++) {
+                for (int j = 0; j < grid.GetLength(1); j++) {
+                    arr[i, j] = grid[i, j].Alive;
+                }
+            }
+            return arr;
+        }
+
+
+        public static bool[,] neighbourhood1dTo2dArray(int neighbourhoodCount, bool[] neighbourhood) {
+            int width = RulesExtensions.gridWidthForNeighbourhoodCount(neighbourhoodCount);
+            bool[,] arr = new bool[width,width];
+            int tempCounter = 0;
+            for (int i = 0; i < width; i++) {
+                for (int j = 0; j < width; j++) {
+                    arr[i, j] = neighbourhood[tempCounter];
+                    tempCounter++;
+                }
+            }
+
+            return arr;
+        }
+
+        public static int gridWidthForNeighbourhoodCount(int neighbourhoodCount) {
+            switch (neighbourhoodCount) {
+                case 4:
+                case 8:
+                    return 3;
+                case 24:
+                    return 5;
+                default:
+                    Debug.Assert(false, "Wrong neighbourhood count");
+                    break;
+            }
+            return -1;
+        }
     }
-
-
-
-
-    //public enum RulePatterns
-    //{
-    //    Diagonal = 0,
-    //    Border
-    //}
-
 }
