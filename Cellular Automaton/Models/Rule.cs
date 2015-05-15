@@ -32,6 +32,10 @@ namespace Cellular_Automaton.Models
         }
 
 
+        private bool _ruleResult = true;
+        public bool RuleResult { get { return _ruleResult; } set { _ruleResult = value; } }
+
+
         private int _neighbourhoodCount = 4;
         public int NeighbourhoodCount {
             get { return _neighbourhoodCount; }
@@ -41,6 +45,7 @@ namespace Cellular_Automaton.Models
                     _neighbourhoodCount = value;
             }
         }
+
 
 
         /// <summary>
@@ -132,10 +137,10 @@ namespace Cellular_Automaton.Models
             int adjecent = this.CountAdjecent(neighbourhood);
             foreach (int allowedCount in this.AllowedAdjecentCount) {
                 if (allowedCount == adjecent)
-                    return true;
+                    return RuleResult; //true;
             }
 
-            return false;
+            return !RuleResult;
         }
 
         private int CountAdjecent(bool[] neighbourhood) {
@@ -177,11 +182,11 @@ namespace Cellular_Automaton.Models
             foreach (bool state in neighbourhood) {
                 if (state != _allowedNeighbourhood[i]) {
                     if (isNeighbourValidAtIndex(i))
-                        return false;
+                        return RuleResult;//false;
                 }
                 i++;
             }
-            return true;
+            return !RuleResult; //true;
         }
 
         private bool isNeighbourValidAtIndex(int index)  {

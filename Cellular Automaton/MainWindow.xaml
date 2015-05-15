@@ -62,7 +62,7 @@
 
         <Grid Grid.Row="1">
             <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="360"/>
+                <ColumnDefinition Width="330"/>
                 <ColumnDefinition Width="1*"/>
             </Grid.ColumnDefinitions>
             <Grid Grid.Column="1">
@@ -112,10 +112,13 @@
                     <RowDefinition Height="30"/>
                     <RowDefinition Height="1*"/>
                     <RowDefinition Height="35"/>
+                    <RowDefinition Height="35"/>
                     <RowDefinition Height="15"/>
                     <RowDefinition Height="30"/>
                     <RowDefinition Height="1*"/>
                     <RowDefinition Height="35"/>
+                    <RowDefinition Height="35"/>
+                    <RowDefinition Height="5"/>
                 </Grid.RowDefinitions>
 
                 <!--Automaton models-->
@@ -136,15 +139,27 @@
                 </Canvas>
 
                 <!--Initial configs-->
-                <Label Grid.Row="4" Content="Initial configurations"/>
-                <ListBox Name="initConfigsListBox" Grid.Row="5" ScrollViewer.CanContentScroll="True">
+                <Label Grid.Row="5" Content="Initial configurations"/>
+                <ListBox Name="initConfigsListBox" Grid.Row="6" ScrollViewer.CanContentScroll="True">
 
                 </ListBox>
 
-                <Canvas Grid.Row="6" Height="35">
+                <Canvas Grid.Row="7" Height="35">
                     <Button x:Name="loadInitStateBtn" Content="Load" Canvas.Top="5" Canvas.Bottom="5" Canvas.Left="5" Height="25" Width="75" Click="loadInitStateBtn_Click"/>
                     <Button x:Name="saveInitStateBtn" Content="Save" Canvas.Top="5" Canvas.Bottom="5" Canvas.Left="85" Height="25" Width="75" Click="saveInitStateBtn_Click"/>
                     <Button x:Name="deleteInitStateBtn" Content="Delete" Canvas.Top="5" Canvas.Bottom="5" Canvas.Left="165" Height="25" Width="75" Click="deleteInitStateBtn_Click"/>
+                </Canvas>
+
+                <Canvas Grid.Row="8" Height="35">
+                    <Button x:Name="openFileInitStateBtn" Content="Open File" Canvas.Top="5" Canvas.Bottom="5" Canvas.Left="5" 
+                            Height="25" Width="75" Click="openFileInitStateBtn_Click"/>
+                    <Button x:Name="saveFileInitStateBtn" Content="Save File" Canvas.Top="5" Canvas.Bottom="5" 
+                            Canvas.Left="85" Height="25" Width="75" Click="saveFileInitStateBtn_Click"/>
+                </Canvas>
+
+                <Canvas Grid.Row="3" Height="35">
+                    <Button x:Name="openFileAutomatonBtn" Content="Open File" Canvas.Top="5" Canvas.Bottom="5" Canvas.Left="5" Height="25" Width="75" Click="openFileAutomatonBtn_Click"/>
+                    <Button x:Name="saveFileAutomatonBtn" Content="Save File" Canvas.Top="5" Canvas.Bottom="5" Canvas.Left="85" Height="25" Width="75" Click="saveFileAutomatonBtn_Click"/>
                 </Canvas>
             </Grid>
         </Grid>

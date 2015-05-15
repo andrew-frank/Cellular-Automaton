@@ -1,10 +1,13 @@
 ﻿using Cellular_Automaton.Common;
 using Cellular_Automaton.Controllers;
 using Cellular_Automaton.Models;
+using Microsoft.Win32;
+using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Diagnostics;
+using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -76,6 +79,8 @@ namespace Cellular_Automaton
         }
 
 
+
+
         private void applyGridSizeBtn_Click(object sender, RoutedEventArgs e) {
             int x = 0, y = 0;
             bool parsed = false;
@@ -114,10 +119,63 @@ namespace Cellular_Automaton
         }
 
 
-        private void loadInitStateBtn_Click(object sender, RoutedEventArgs e) {
+        private void openFileInitStateBtn_Click(object sender, RoutedEventArgs e) {
+            String dir = System.IO.Path.GetDirectoryName(Environment.GetCommandLineArgs()[0]);
+            String path = dir + @"\initConfigs\";
+
+            Microsoft.Win32.OpenFileDialog dlg = new Microsoft.Win32.OpenFileDialog();
+            dlg.DefaultExt = ".json";
+            dlg.Filter = "JSON Files (*.json)|*.json";
+
+            Nullable<bool> result = dlg.ShowDialog();
+            if (result == true) {
+                string filename = dlg.FileName;
+
+                AutomatonConfiguration config = new AutomatonConfiguration(null, null);
+                try {
+                    config = JsonConvert.DeserializeObject<AutomatonConfiguration>(File.ReadAllText(filename));
+                } catch (Exception ex) {
+                    MessageBox.Show("Opening file failed" + ex.ToString(), "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                } finally {
+                    this._initialConfigurations.Add(config);
+                    if (config.Rows == this._automatonController.CurrentAutomaton.Rows && config.Columns == this._automatonController.CurrentAutomaton.Columns) {
+                        _automatonController.SetNewConfiguration(config);
+                    } else {
+                        _automatonController.SetNewConfiguration(config);
+                        this.NewGame(this._automatonController.CurrentAutomaton);
+                    }
+                    MessageBox.Show("Success", "Success", MessageBoxButton.OK, MessageBoxImage.Information);
+                }
+            }
+        }
+
+        private void saveFileInitStateBtn_Click(object sender, RoutedEventArgs e) {
             var item = this.initConfigsListBox.SelectedItem;
             if (item == null)
                 return;
+            Debug.Assert(item is AutomatonConfiguration);
+
+            AutomatonConfiguration config = (AutomatonConfiguration)item;
+            //_automatonController.IsPaused = true;
+
+            String dir = System.IO.Path.GetDirectoryName(Environment.GetCommandLineArgs()[0]);
+            String path = dir + @"\initConfigs\";
+            System.IO.FileInfo file = new System.IO.FileInfo(path);
+            file.Directory.Create();
+
+            path = dir + @"\initConfigs\" + config.Name + @".json";
+            File.WriteAllText(path, JsonConvert.SerializeObject(config));
+
+            MessageBox.Show("Success", "Success", MessageBoxButton.OK, MessageBoxImage.Information);
+        }
+
+
+        private void loadInitStateBtn_Click(object sender, RoutedEventArgs e) {
+            var item = this.initConfigsListBox.SelectedItem;
+            if (item == null) {
+                MessageBox.Show("Warning", "Select a model", MessageBoxButton.OK, MessageBoxImage.Information);
+                return;
+            }
             Debug.Assert(item is AutomatonConfiguration);
             
             AutomatonConfiguration config = (AutomatonConfiguration)item;
@@ -153,10 +211,61 @@ namespace Cellular_Automaton
             this._initialConfigurations.Remove(config);
         }
 
+
+
+        private void openFileAutomatonBtn_Click(object sender, RoutedEventArgs e) {
+            String dir = System.IO.Path.GetDirectoryName(Environment.GetCommandLineArgs()[0]);
+            String path = dir + @"\initConfigs\";
+
+            Microsoft.Win32.OpenFileDialog dlg = new Microsoft.Win32.OpenFileDialog();
+            dlg.DefaultExt = ".json";
+            dlg.Filter = "JSON Files (*.json)|*.json";
+
+            Nullable<bool> result = dlg.ShowDialog();
+            if (result == true) {
+                string filename = dlg.FileName;
+
+                Automaton automaton = new Automaton();
+                try {
+                    automaton = JsonConvert.DeserializeObject<Automaton>(File.ReadAllText(filename));
+                } catch (Exception ex) {
+                    MessageBox.Show("Opening file failed" + ex.ToString(), "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                } finally {
+                    this._automatonModels.Add(automaton);
+                    _automatonController.IsPaused = true;
+                    this.NewGame(automaton);
+                    MessageBox.Show("Success", "Success", MessageBoxButton.OK, MessageBoxImage.Information);
+                }
+            }
+        }
+
+        private void saveFileAutomatonBtn_Click(object sender, RoutedEventArgs e) {
+            var item = this.modelsListBox.SelectedItem;
+            if (item == null) {
+                MessageBox.Show("Warning", "Select a model", MessageBoxButton.OK, MessageBoxImage.Information);
+                return;
+            }
+
+            Debug.Assert(item is Automaton);
+            Automaton automaton = (Automaton)item;
+
+            String dir = System.IO.Path.GetDirectoryName(Environment.GetCommandLineArgs()[0]);
+            String path = dir + @"\automatonModels\";
+            System.IO.FileInfo file = new System.IO.FileInfo(path);
+            file.Directory.Create();
+
+            path = dir + @"\automatonModels\" + automaton.Name + @".json";
+            File.WriteAllText(path, JsonConvert.SerializeObject(automaton));
+            MessageBox.Show("Success", "Success", MessageBoxButton.OK, MessageBoxImage.Information);
+        }
+
+
         private void loadAutomatonBtn_Click(object sender, RoutedEventArgs e) {
             var item = this.modelsListBox.SelectedItem;
-            if (item == null)
+            if (item == null) {
+                MessageBox.Show("Warning", "Select a model", MessageBoxButton.OK, MessageBoxImage.Information);
                 return;
+            }
             Debug.Assert(item is Automaton);
             Automaton automaton = (Automaton)item;
             _automatonController.IsPaused = true;
@@ -193,8 +302,10 @@ namespace Cellular_Automaton
         private void deleteAutomatonModelBtn_Click(object sender, RoutedEventArgs e) {
             var item = this.modelsListBox.SelectedItem;
             int index = this.modelsListBox.SelectedIndex;
-            if (item == null)
+            if (item == null) {
+                MessageBox.Show("Warning", "Select a model", MessageBoxButton.OK, MessageBoxImage.Information);
                 return;
+            }
             Debug.Assert(item is Automaton);
             Automaton automaton = (Automaton)item;
             this._automatonModels.Remove(automaton);

@@ -113,6 +113,11 @@ namespace Cellular_Automaton
                 default:
                     break;
             }
+
+            if (rule.RuleResult)
+                this.makeAliveCheckBox.IsChecked = true;
+            else
+                this.makeDeadCheckBox.IsChecked = true;
         }
 
 
@@ -281,5 +286,19 @@ namespace Cellular_Automaton
         }
 
         #endregion
+
+        private void makeAliveCheckBox_Checked(object sender, RoutedEventArgs e) {
+            if (this.modifiedRule == null)
+                return;
+
+            this.modifiedRule.RuleResult = true;
+        }
+
+        private void makeDeadCheckBox_Checked(object sender, RoutedEventArgs e) {
+            if (this.modifiedRule == null)
+                return;
+
+            this.modifiedRule.RuleResult = false;
+        }
     }
 }
