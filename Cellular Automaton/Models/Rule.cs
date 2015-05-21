@@ -9,6 +9,12 @@ using System.Threading.Tasks;
 
 namespace Cellular_Automaton.Models
 {
+    public struct EvaluateResult
+    {
+        public bool DidApply;
+        public bool Result;
+    }
+
     public enum RuleType
     {
         Count = 0,
@@ -36,6 +42,10 @@ namespace Cellular_Automaton.Models
         public bool RuleResult { get { return _ruleResult; } set { _ruleResult = value; } }
 
 
+        private bool _defaultResultLeaveActive = true;
+        public bool DefaultResultLeaveActive { get { return _defaultResultLeaveActive; } set { _defaultResultLeaveActive = value; } }
+
+
         private int _neighbourhoodCount = 4;
         public int NeighbourhoodCount {
             get { return _neighbourhoodCount; }
@@ -54,7 +64,8 @@ namespace Cellular_Automaton.Models
         /// </summary>
         /// <param name="neighbourhood">Array of bool states of neighbourhood (evaluated cell + neighbours)</param>
         /// <returns>New state of the middle cell</returns>
-        public bool EvaluateNeighbours(bool[] neighbourhood) {
+        public EvaluateResult EvaluateNeighbours(bool[] neighbourhood)
+        {
             switch (this.Type) {
                 case RuleType.Count:
                     return EvaluateCountNeighbours(neighbourhood);
@@ -62,7 +73,10 @@ namespace Cellular_Automaton.Models
                     return EvaluateMatchNeighbours(neighbourhood);
                 default:
                     Debug.Assert(false, "Invalid type");
-                    return false;
+                    EvaluateResult res;
+                    res.DidApply = false;
+                    res.Result = false;
+                    return res;
             }
         }
 
@@ -118,6 +132,8 @@ namespace Cellular_Automaton.Models
             }
 
             this.Type = rule.Type;
+            this.DefaultResultLeaveActive = rule.DefaultResultLeaveActive;
+            this.RuleResult = rule.RuleResult;
         }
 
         protected Rule() { }
@@ -133,14 +149,27 @@ namespace Cellular_Automaton.Models
             set { _allowedAdjecentCount = value; }
         }
 
-        public bool EvaluateCountNeighbours(bool[] neighbourhood) {
+        public EvaluateResult EvaluateCountNeighbours(bool[] neighbourhood)
+        {
+            EvaluateResult result;
+            
             int adjecent = this.CountAdjecent(neighbourhood);
             foreach (int allowedCount in this.AllowedAdjecentCount) {
-                if (allowedCount == adjecent)
-                    return RuleResult; //true;
+                if (allowedCount == adjecent) {
+                    result.DidApply = true;
+                    result.Result = RuleResult;
+                    return result;
+                }
             }
 
-            return !RuleResult;
+            result.DidApply = false;
+            bool currentStatus = neighbourhood[RulesExtensions.evaluatedCellIndex(this.NeighbourhoodCount)];
+            if (this.DefaultResultLeaveActive)
+                result.Result = currentStatus;
+            else
+                result.Result = !currentStatus;
+
+            return result;
         }
 
         private int CountAdjecent(bool[] neighbourhood) {
@@ -177,16 +206,28 @@ namespace Cellular_Automaton.Models
             }
         }
 
-        public bool EvaluateMatchNeighbours(bool[] neighbourhood) {
+        public EvaluateResult EvaluateMatchNeighbours(bool[] neighbourhood) {
+            EvaluateResult result;
+
             int i = 0;
             foreach (bool state in neighbourhood) {
                 if (state != _allowedNeighbourhood[i]) {
-                    if (isNeighbourValidAtIndex(i))
-                        return RuleResult;//false;
+                    if (isNeighbourValidAtIndex(i)) {
+                        bool currentStatus = neighbourhood[RulesExtensions.evaluatedCellIndex(this.NeighbourhoodCount)];
+                        result.DidApply = false;
+                        if (this.DefaultResultLeaveActive)
+                            result.Result = currentStatus;
+                        else
+                            result.Result = !currentStatus;
+                        return result;
+                    }
                 }
                 i++;
             }
-            return !RuleResult; //true;
+
+            result.DidApply = true;
+            result.Result = this.RuleResult;
+            return result;
         }
 
         private bool isNeighbourValidAtIndex(int index)  {
@@ -215,6 +256,20 @@ namespace Cellular_Automaton.Models
 
     public static class RulesExtensions
     {
+        public static int evaluatedCellIndex(int environment) {
+                switch (environment) {
+                    case 4:
+                    case 8:
+                        return 1;
+                    case 24:
+                        return 2;
+                    default:
+                        Debug.Assert(false, "Wrong neighbourhood count");
+                        break;
+                }
+                return -1;
+        }
+
         public static int neighbourhood1DArrLengthFromNeighbourhoodCount(int neighbourhoodCount) {
             switch (neighbourhoodCount) {
                 case 4:

@@ -57,6 +57,7 @@ namespace Cellular_Automaton
                     this.altDenialRadioBtn.IsChecked = false;
                     this.exlDisRadioBtn.IsChecked = false;
                     this.joinDenialRadioBtn.IsChecked = false;
+                    this.noLogicRadioBtn.IsChecked = false;
                     break;
                 case RulesLogicalOperator.Disjunction:
                     this.conjunctionRadioBtn.IsChecked = false;
@@ -71,6 +72,7 @@ namespace Cellular_Automaton
                     this.altDenialRadioBtn.IsChecked = true;
                     this.exlDisRadioBtn.IsChecked = false;
                     this.joinDenialRadioBtn.IsChecked = false;
+                    this.noLogicRadioBtn.IsChecked = false;
                     break;
                 case RulesLogicalOperator.ExclusiveDisjunction:
                     this.conjunctionRadioBtn.IsChecked = false;
@@ -78,6 +80,7 @@ namespace Cellular_Automaton
                     this.altDenialRadioBtn.IsChecked = false;
                     this.exlDisRadioBtn.IsChecked = true;
                     this.joinDenialRadioBtn.IsChecked = false;
+                    this.noLogicRadioBtn.IsChecked = false;
                     break;
                 case RulesLogicalOperator.JoinDenial:
                     this.conjunctionRadioBtn.IsChecked = false;
@@ -85,6 +88,15 @@ namespace Cellular_Automaton
                     this.altDenialRadioBtn.IsChecked = false;
                     this.exlDisRadioBtn.IsChecked = false;
                     this.joinDenialRadioBtn.IsChecked = true;
+                    this.noLogicRadioBtn.IsChecked = false;
+                    break;
+                case RulesLogicalOperator.None:
+                    this.conjunctionRadioBtn.IsChecked = false;
+                    this.disjunctionRadioBtn.IsChecked = false;
+                    this.altDenialRadioBtn.IsChecked = false;
+                    this.exlDisRadioBtn.IsChecked = false;
+                    this.joinDenialRadioBtn.IsChecked = false;
+                    this.noLogicRadioBtn.IsChecked = true;
                     break;
                 default:
                     Debug.Assert(false, "Wrong logical operator");
@@ -95,6 +107,7 @@ namespace Cellular_Automaton
 
 
         private void saveBtn_Click(object sender, RoutedEventArgs e) {
+            this.modifiedAutomaton.Name = this.nameTextBox.Text;
             DialogResult = true;
             //this.automaton = this.automaton;
         }
@@ -126,7 +139,8 @@ namespace Cellular_Automaton
             wnd.ShowDialog();
             if (wnd.DialogResult == true) {
                 this.modifiedAutomaton.Rules.Remove(rule);
-                this.modifiedAutomaton.Rules.Insert(index, wnd.modifiedRule);
+                Rule newRule = wnd.modifiedRule;
+                this.modifiedAutomaton.Rules.Insert(index, newRule);
             }
         }
 
@@ -179,6 +193,13 @@ namespace Cellular_Automaton
             if (this.modifiedAutomaton == null)
                 return;
             this.modifiedAutomaton.LogicalOperator = RulesLogicalOperator.JoinDenial;
+        }
+
+        private void noLogicRadioBtn_Checked(object sender, RoutedEventArgs e)
+        {
+            if (this.modifiedAutomaton == null)
+                return;
+            this.modifiedAutomaton.LogicalOperator = RulesLogicalOperator.None;
         }
     }
 }

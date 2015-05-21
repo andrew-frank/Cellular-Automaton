@@ -122,6 +122,8 @@ namespace Cellular_Automaton
         private void openFileInitStateBtn_Click(object sender, RoutedEventArgs e) {
             String dir = System.IO.Path.GetDirectoryName(Environment.GetCommandLineArgs()[0]);
             String path = dir + @"\initConfigs\";
+            System.IO.FileInfo file = new System.IO.FileInfo(path);
+            file.Directory.Create();
 
             Microsoft.Win32.OpenFileDialog dlg = new Microsoft.Win32.OpenFileDialog();
             dlg.DefaultExt = ".json";
@@ -151,8 +153,10 @@ namespace Cellular_Automaton
 
         private void saveFileInitStateBtn_Click(object sender, RoutedEventArgs e) {
             var item = this.initConfigsListBox.SelectedItem;
-            if (item == null)
+            if (item == null) {
+                MessageBox.Show("Select a model", "Warning", MessageBoxButton.OK, MessageBoxImage.Information);
                 return;
+            }
             Debug.Assert(item is AutomatonConfiguration);
 
             AutomatonConfiguration config = (AutomatonConfiguration)item;
@@ -163,7 +167,7 @@ namespace Cellular_Automaton
             System.IO.FileInfo file = new System.IO.FileInfo(path);
             file.Directory.Create();
 
-            path = dir + @"\initConfigs\" + config.Name + @".json";
+            path += config.Name + @".json";
             File.WriteAllText(path, JsonConvert.SerializeObject(config));
 
             MessageBox.Show("Success", "Success", MessageBoxButton.OK, MessageBoxImage.Information);
@@ -173,7 +177,7 @@ namespace Cellular_Automaton
         private void loadInitStateBtn_Click(object sender, RoutedEventArgs e) {
             var item = this.initConfigsListBox.SelectedItem;
             if (item == null) {
-                MessageBox.Show("Warning", "Select a model", MessageBoxButton.OK, MessageBoxImage.Information);
+                MessageBox.Show("Select a model", "Warning", MessageBoxButton.OK, MessageBoxImage.Information);
                 return;
             }
             Debug.Assert(item is AutomatonConfiguration);
@@ -204,8 +208,10 @@ namespace Cellular_Automaton
 
         private void deleteInitStateBtn_Click(object sender, RoutedEventArgs e) {
             var item = this.initConfigsListBox.SelectedItem;
-            if (item == null)
+            if (item == null) {
+                MessageBox.Show("Select a model", "Warning", MessageBoxButton.OK, MessageBoxImage.Information);
                 return;
+            }
             Debug.Assert(item is AutomatonConfiguration);
             AutomatonConfiguration config = (AutomatonConfiguration)item;
             this._initialConfigurations.Remove(config);
@@ -213,36 +219,46 @@ namespace Cellular_Automaton
 
 
 
-        private void openFileAutomatonBtn_Click(object sender, RoutedEventArgs e) {
-            String dir = System.IO.Path.GetDirectoryName(Environment.GetCommandLineArgs()[0]);
-            String path = dir + @"\initConfigs\";
+        private void openFileAutomatonBtn_Click(object sender, RoutedEventArgs e) 
+        {
+            try {
+                String dir = System.IO.Path.GetDirectoryName(Environment.GetCommandLineArgs()[0]);
+                String path = dir + @"\automatonModels\";
+                System.IO.FileInfo file = new System.IO.FileInfo(path);
+                file.Directory.Create();
 
-            Microsoft.Win32.OpenFileDialog dlg = new Microsoft.Win32.OpenFileDialog();
-            dlg.DefaultExt = ".json";
-            dlg.Filter = "JSON Files (*.json)|*.json";
+                OpenFileDialog dlg = new OpenFileDialog();
+                dlg.DefaultExt = ".json";
+                dlg.Filter = "JSON Files (*.json)|*.json";
 
-            Nullable<bool> result = dlg.ShowDialog();
-            if (result == true) {
-                string filename = dlg.FileName;
+                Nullable<bool> result = dlg.ShowDialog();
 
-                Automaton automaton = new Automaton();
-                try {
-                    automaton = JsonConvert.DeserializeObject<Automaton>(File.ReadAllText(filename));
-                } catch (Exception ex) {
-                    MessageBox.Show("Opening file failed" + ex.ToString(), "Error", MessageBoxButton.OK, MessageBoxImage.Error);
-                } finally {
-                    this._automatonModels.Add(automaton);
-                    _automatonController.IsPaused = true;
-                    this.NewGame(automaton);
-                    MessageBox.Show("Success", "Success", MessageBoxButton.OK, MessageBoxImage.Information);
+                if (result !=null && result.Value == true) {
+                    string filename = dlg.FileName;
+                    Automaton automaton = new Automaton();
+                    try {
+                        automaton = JsonConvert.DeserializeObject<Automaton>(File.ReadAllText(filename));
+                    } catch (Exception ex) {
+                        MessageBox.Show("Opening file failed" + ex.ToString(), "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                    } finally {
+                        this._automatonModels.Add(automaton);
+                        _automatonController.IsPaused = true;
+                        this.NewGame(automaton);
+                        MessageBox.Show("Success", "Success", MessageBoxButton.OK, MessageBoxImage.Information);
+                    }
                 }
+
+            } catch(Exception ex) {
+                MessageBox.Show("Exception", ex.ToString(), MessageBoxButton.OK, MessageBoxImage.Information);
+                return;
             }
         }
+
 
         private void saveFileAutomatonBtn_Click(object sender, RoutedEventArgs e) {
             var item = this.modelsListBox.SelectedItem;
             if (item == null) {
-                MessageBox.Show("Warning", "Select a model", MessageBoxButton.OK, MessageBoxImage.Information);
+                MessageBox.Show("Select a model", "Warning", MessageBoxButton.OK, MessageBoxImage.Information);
                 return;
             }
 
@@ -254,7 +270,7 @@ namespace Cellular_Automaton
             System.IO.FileInfo file = new System.IO.FileInfo(path);
             file.Directory.Create();
 
-            path = dir + @"\automatonModels\" + automaton.Name + @".json";
+            path += automaton.Name + @".json";
             File.WriteAllText(path, JsonConvert.SerializeObject(automaton));
             MessageBox.Show("Success", "Success", MessageBoxButton.OK, MessageBoxImage.Information);
         }
@@ -275,8 +291,10 @@ namespace Cellular_Automaton
         private void editAutomatonBtn_Click(object sender, RoutedEventArgs e) {
             var item = this.modelsListBox.SelectedItem;
             int index = this.modelsListBox.SelectedIndex;
-            if (item == null)
+            if (item == null) {
+                MessageBox.Show("Select a model", "Warning", MessageBoxButton.OK, MessageBoxImage.Information);
                 return;
+            }
             _automatonController.IsPaused = true;
             Debug.Assert(item is Automaton);
             Automaton automaton = (Automaton)item;
@@ -398,7 +416,7 @@ namespace Cellular_Automaton
                 }
             }
 
-            config = new AutomatonConfiguration("Example config 2", grid);
+            config = new AutomatonConfiguration("Diagonal", grid);
             _initialConfigurations.Add(config);
 
             grid = new bool[_automatonController.CurrentAutomaton.Rows, _automatonController.CurrentAutomaton.Columns];
@@ -409,7 +427,7 @@ namespace Cellular_Automaton
                 }
             }
 
-            config = new AutomatonConfiguration("Example config 2", grid);
+            config = new AutomatonConfiguration("Board", grid);
             _initialConfigurations.Add(config);
 
             grid = new bool[_automatonController.CurrentAutomaton.Rows, _automatonController.CurrentAutomaton.Columns];
@@ -420,20 +438,13 @@ namespace Cellular_Automaton
                 }
             }
 
-            config = new AutomatonConfiguration("Example config 3", grid);
+            config = new AutomatonConfiguration("Random", grid);
             _initialConfigurations.Add(config);
 
             //models
 
             //m1
             Automaton model = new Automaton();
-            model.Name = "Game of life #1";
-            model.NeighbourhoodEnvironment = 4;
-            model.Rules.Add(new Rule("Life rule #1", model.NeighbourhoodEnvironment, RuleType.Count) );
-            _automatonModels.Add(model);
-
-            //m2
-            model = new Automaton();
             model.Name = "Matching model #1";
             model.NeighbourhoodEnvironment = 8;
             Rule r = new Rule("Match rule #1", model.NeighbourhoodEnvironment, RuleType.Match);
@@ -454,22 +465,30 @@ namespace Cellular_Automaton
 
             _automatonModels.Add(model);
 
-            //m3
-            model = new Automaton();
-            model.Name = "Game of life #2";
-            model.NeighbourhoodEnvironment = 8;
-            model.Rules.Add(new Rule("Life rule #1", model.NeighbourhoodEnvironment, RuleType.Count));
-            _automatonModels.Add(model);
-
             //m4
             model = new Automaton();
-            model.Name = "Game of life #4";
-            model.NeighbourhoodEnvironment = 24;
-            model.Rules.Add(new Rule("Life rule #1", model.NeighbourhoodEnvironment, RuleType.Count));
+            model.Name = "Game of life";
+            model.NeighbourhoodEnvironment = 4;
+            model.Rules.Add(new Rule("2,3 -> Alive ", model.NeighbourhoodEnvironment, RuleType.Count));
             int[] t = new int[2];
+            t[0] = 2;
+            t[1] = 3;
+            model.Rules.First().AllowedAdjecentCount = t;
+            model.Rules.First().RuleResult = true;
+            model.Rules.First().DefaultResultLeaveActive = true;
+            model.LogicalOperator = RulesLogicalOperator.None;
+            r = new Rule("1,4,5,6,7,8 -> Dead ", model.NeighbourhoodEnvironment, RuleType.Count);
+            t = new int[6];
             t[0] = 1;
             t[1] = 4;
-            model.Rules.First().AllowedAdjecentCount = t;
+            t[2] = 5;
+            t[3] = 6;
+            t[4] = 7;
+            t[5] = 8;
+            r.AllowedAdjecentCount = t;
+            r.RuleResult = false;
+            r.DefaultResultLeaveActive = true;
+            model.Rules.Add(r);
             _automatonModels.Add(model);
         }
 

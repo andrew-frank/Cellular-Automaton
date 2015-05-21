@@ -15,7 +15,8 @@ namespace Cellular_Automaton.Models
         Disjunction, //or
         ExclusiveDisjunction, //xor (either-or)
         AlternativeDenial, //not both (nand)
-        JoinDenial //nor
+        JoinDenial, //nor
+        None
     };
 
     public class Automaton : INotifyPropertyChanged
@@ -135,6 +136,7 @@ namespace Cellular_Automaton.Models
         {
             InitArrays(AutomatonSettings.defaults.gridWidth, AutomatonSettings.defaults.gridHeight);
             Automaton.AutomatonCount++;
+            this.LogicalOperator = RulesLogicalOperator.None;
         }
 
         public Automaton(Automaton automaton) 
@@ -156,6 +158,7 @@ namespace Cellular_Automaton.Models
         {
             Automaton.AutomatonCount++;
             InitArrays(rows, columns);
+            this.LogicalOperator = RulesLogicalOperator.None;
         }
 
         public override string ToString() {
@@ -175,6 +178,9 @@ namespace Cellular_Automaton.Models
                     break;
                 case RulesLogicalOperator.ExclusiveDisjunction:
                     logic = "Exclusive Disjunction";
+                    break;
+                case RulesLogicalOperator.None:
+                    logic = "No Logical Operator";
                     break;
                 default:
                     Debug.Assert(false, "Wrong logical operator");
@@ -254,7 +260,7 @@ namespace Cellular_Automaton.Models
                 PeakPopulation = _peakPopulation;
             }
 
-            bool[] results = new bool[Rules.Count];
+            EvaluateResult[] results = new EvaluateResult[Rules.Count];
             int tempCounter = 0;
             bool[,] neighb;
             bool[] neighbourhood;
@@ -262,9 +268,10 @@ namespace Cellular_Automaton.Models
 
             for (int row = 0; row < Rows; row++) {
                 for (int col = 0; col < Columns; col++) {
-                    makeAlive = false;
                     neighb = GetNeighbourhood(row, col);
                     neighbourhood = RulesExtensions.neighbourhood2dTo1dArray(this.NeighbourhoodEnvironment, neighb);
+                    //makeAlive = false;
+                    makeAlive = neighbourhood[RulesExtensions.evaluatedCellIndex(this.NeighbourhoodEnvironment)];
 
                     tempCounter = 0;
                     foreach (Rule rule in Rules) {
@@ -275,46 +282,55 @@ namespace Cellular_Automaton.Models
                     bool firstRuleEval = true;
                     switch (this.LogicalOperator) {
                         case RulesLogicalOperator.Disjunction:
-                            foreach (bool b in results) {
-                                if (firstRuleEval) makeAlive = b;
-                                else makeAlive = (b || makeAlive);
+                            foreach (EvaluateResult b in results) {
+                                if (firstRuleEval) makeAlive = b.Result;
+                                else makeAlive = (b.Result || makeAlive);
                                 firstRuleEval = false;
                             }
                             break;
                         case RulesLogicalOperator.Conjunction:
-                            foreach (bool b in results) {
-                                if (firstRuleEval) makeAlive = b;
-                                else makeAlive = (b && makeAlive);
+                            foreach (EvaluateResult b in results) {
+                                if (firstRuleEval) makeAlive = b.Result;
+                                else makeAlive = (b.Result && makeAlive);
                                 firstRuleEval = false;
                             }
                             break;
                         case RulesLogicalOperator.AlternativeDenial:
-                            foreach (bool b in results) {
-                                if (firstRuleEval) makeAlive = b;
-                                else makeAlive = (b && makeAlive);
+                            foreach (EvaluateResult b in results) {
+                                if (firstRuleEval) makeAlive = b.Result;
+                                else makeAlive = (b.Result && makeAlive);
                                 firstRuleEval = false;
                             }
                             makeAlive = !makeAlive;
                             break;
                         case RulesLogicalOperator.ExclusiveDisjunction:
-                            foreach (bool b in results) {
-                                if (firstRuleEval) makeAlive = b;
-                                else makeAlive = (b ^ makeAlive);
+                            foreach (EvaluateResult b in results) {
+                                if (firstRuleEval) makeAlive = b.Result;
+                                else makeAlive = (b.Result ^ makeAlive);
                                 firstRuleEval = false;
                             }
                             break;
                         case RulesLogicalOperator.JoinDenial:
-                            foreach (bool b in results) {
-                                if (firstRuleEval) makeAlive = b;
-                                else makeAlive = (b || makeAlive);
+                            foreach (EvaluateResult b in results) {
+                                if (firstRuleEval) makeAlive = b.Result;
+                                else makeAlive = (b.Result || makeAlive);
                                 firstRuleEval = false;
                             }
                             makeAlive = !makeAlive;
                             break;
+                        case RulesLogicalOperator.None: {
+                            foreach (EvaluateResult res in results) {
+                                if (res.DidApply == true) {
+                                    makeAlive = res.Result;
+                                    break;
+                                }
+                            }
+                            break;
+                        }
                         default:
-                            foreach (bool b in results) {
-                                if (firstRuleEval) makeAlive = b;
-                                else makeAlive = (b || makeAlive);
+                            foreach (EvaluateResult b in results) {
+                                if (firstRuleEval) makeAlive = b.Result;
+                                else makeAlive = (b.Result || makeAlive);
                                 firstRuleEval = false;
                             }
                             Debug.Assert(false, "Unspecified logical operator");

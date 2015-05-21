@@ -63,6 +63,7 @@
                     <RowDefinition Height="40"/>
                     <RowDefinition Height="40"/>
                     <RowDefinition Height="40"/>
+                    <RowDefinition Height="40"/>
                     <RowDefinition/>
                 </Grid.RowDefinitions>
                 <Label Grid.Row="0" VerticalAlignment="Bottom" HorizontalAlignment="Stretch" 
@@ -78,6 +79,8 @@
                                  HorizontalAlignment="Stretch" Margin="10" Checked="altDenialRadioBtn_Checked"/>
                 <RadioButton x:Name="joinDenialRadioBtn" Grid.Row="5" Content="Join Denial" VerticalAlignment="Center" 
                                  HorizontalAlignment="Stretch" Margin="10" Checked="joinDenialRadioBtn_Checked"/>
+                <RadioButton x:Name="noLogicRadioBtn" Grid.Row="6" Content="None" VerticalAlignment="Center" 
+                                 HorizontalAlignment="Stretch" Margin="10" Checked="noLogicRadioBtn_Checked"/>
             </Grid>
 
             <Grid Grid.Column="2">

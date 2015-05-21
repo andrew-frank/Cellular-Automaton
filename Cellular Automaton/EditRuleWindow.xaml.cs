@@ -114,10 +114,20 @@ namespace Cellular_Automaton
                     break;
             }
 
-            if (rule.RuleResult)
+            if (rule.RuleResult) {
                 this.makeAliveCheckBox.IsChecked = true;
-            else
+                this.makeDeadCheckBox.IsChecked = false;
+            } else {
+                this.makeAliveCheckBox.IsChecked = false;
                 this.makeDeadCheckBox.IsChecked = true;
+            }
+
+            if (rule.DefaultResultLeaveActive)
+                this.defaultResultLeveCheckBox.IsChecked = true;
+            else
+                this.defaultResultLeveCheckBox.IsChecked = false;
+
+            
         }
 
 
@@ -299,6 +309,16 @@ namespace Cellular_Automaton
                 return;
 
             this.modifiedRule.RuleResult = false;
+        }
+
+        private void defaultResultLeveCheckBox_Checked(object sender, RoutedEventArgs e)
+        {
+            this.modifiedRule.DefaultResultLeaveActive = true;
+        }
+
+        private void defaultResultChangeCheckBox_Checked(object sender, RoutedEventArgs e)
+        {
+            this.modifiedRule.DefaultResultLeaveActive = false;
         }
     }
 }
