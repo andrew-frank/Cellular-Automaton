@@ -1,4 +1,4 @@
 # Cellular-Automaton
 Simulation of cellular automaton in WPF - uni project
-(/image1.png)
-(/image2.png)
+![1](/image1.png)
+![2](/image2.png)
